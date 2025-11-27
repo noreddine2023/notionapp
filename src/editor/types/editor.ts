@@ -155,3 +155,15 @@ export interface ColorOption {
   name: string;
   value: string;
 }
+
+/**
+ * Page data structure for pages navigation
+ */
+export interface Page {
+  id: string;
+  title: string;
+  icon?: string;
+  children?: Page[];
+  createdAt: Date;
+  updatedAt: Date;
+}

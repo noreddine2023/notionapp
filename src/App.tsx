@@ -95,40 +95,44 @@ const App: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0.75rem 1.5rem;
-          border-bottom: 1px solid var(--editor-border);
-          background: var(--editor-toolbar-bg);
+          padding: 0.875rem 1.5rem;
+          background: var(--editor-header-gradient);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .app-title {
-          font-size: 1.125rem;
-          font-weight: 600;
+          font-size: 1.25rem;
+          font-weight: 700;
           margin: 0;
+          color: white;
+          letter-spacing: -0.02em;
         }
 
         .app-actions {
           display: flex;
-          gap: 0.5rem;
+          gap: 0.75rem;
         }
 
         .theme-toggle {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 36px;
-          height: 36px;
+          width: 40px;
+          height: 40px;
           padding: 0;
-          border: 1px solid var(--editor-border);
-          border-radius: 8px;
-          background: var(--editor-bg);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.1);
           font-size: 18px;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          backdrop-filter: blur(8px);
         }
 
         .theme-toggle:hover {
-          background: var(--editor-code-bg);
-          border-color: var(--editor-border-hover);
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: scale(1.05);
         }
 
         .app-main {
@@ -147,6 +151,25 @@ const App: React.FC = () => {
           font-family: var(--editor-font-family);
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: var(--editor-border);
+          border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: var(--editor-border-hover);
         }
       `}</style>
     </div>

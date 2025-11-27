@@ -326,91 +326,102 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
         .top-toolbar {
           display: flex;
           align-items: center;
-          padding: 0.5rem;
+          padding: 0.75rem 1rem;
           border-bottom: 1px solid var(--editor-toolbar-border);
           background: var(--editor-toolbar-bg);
           flex-wrap: wrap;
-          gap: 0.25rem;
+          gap: 0.375rem;
         }
 
         .toolbar-group {
           display: flex;
           align-items: center;
-          gap: 2px;
+          gap: 3px;
         }
 
         .toolbar-divider {
           width: 1px;
-          height: 24px;
+          height: 28px;
           background: var(--editor-border);
-          margin: 0 0.5rem;
+          margin: 0 0.625rem;
         }
 
         .toolbar-select {
-          height: 32px;
-          padding: 0 0.5rem;
+          height: 36px;
+          padding: 0 0.75rem;
           border: 1px solid var(--editor-border);
-          border-radius: 4px;
+          border-radius: var(--editor-radius-sm);
           background: var(--editor-bg);
           color: var(--editor-text);
           font-size: 0.875rem;
+          font-weight: 500;
           cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .toolbar-select:hover {
           border-color: var(--editor-border-hover);
+          background: var(--editor-code-bg);
         }
 
         .toolbar-select:focus {
           outline: none;
           border-color: var(--editor-primary);
+          box-shadow: 0 0 0 3px var(--editor-primary-light);
         }
 
         .color-select {
-          width: 80px;
+          width: 88px;
         }
 
         .toolbar-button {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           border: none;
-          border-radius: 4px;
+          border-radius: var(--editor-radius-sm);
           background: transparent;
           color: var(--editor-text);
           font-size: 14px;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .toolbar-button:hover:not(:disabled) {
-          background: var(--editor-code-bg);
+          background: var(--editor-hover-bg);
         }
 
         .toolbar-button.active {
-          background: var(--editor-selection);
+          background: var(--editor-primary-light);
           color: var(--editor-primary);
         }
 
         .toolbar-button:disabled {
-          opacity: 0.5;
+          opacity: 0.4;
           cursor: not-allowed;
         }
 
         @media (max-width: 768px) {
           .top-toolbar {
-            padding: 0.25rem;
+            padding: 0.5rem;
           }
 
           .toolbar-divider {
-            margin: 0 0.25rem;
+            margin: 0 0.375rem;
           }
 
           .toolbar-button {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
+          }
+
+          .toolbar-select {
+            height: 32px;
+            padding: 0 0.5rem;
+            font-size: 0.8125rem;
           }
         }
       `}</style>

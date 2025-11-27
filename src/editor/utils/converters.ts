@@ -158,7 +158,9 @@ export function markdownToJson(markdown: string): JSONContent {
 
     // Code block
     if (line.startsWith('```')) {
-      const lang = line.slice(3);
+      const rawLang = line.slice(3).trim();
+      // Sanitize language: only allow alphanumeric, plus, sharp, and dash
+      const lang = rawLang.match(/^[a-zA-Z0-9+#-]+$/) ? rawLang : 'plaintext';
       const codeLines: string[] = [];
       i++;
       while (i < lines.length && !lines[i].startsWith('```')) {
@@ -302,20 +304,11 @@ function getTextContent(node: JSONContent): string {
  */
 function parseInlineMarks(text: string): JSONContent[] {
   const content: JSONContent[] = [];
-  let remaining = text;
-
-  // Simple regex-based parsing (not handling nested marks properly)
-  const patterns = [
-    { regex: /\*\*(.+?)\*\*/g, mark: 'bold' },
-    { regex: /\*(.+?)\*/g, mark: 'italic' },
-    { regex: /`(.+?)`/g, mark: 'code' },
-    { regex: /~~(.+?)~~/g, mark: 'strike' },
-  ];
 
   // For simplicity, just return the text as-is
   // A proper implementation would parse inline marks
-  if (remaining) {
-    content.push({ type: 'text', text: remaining });
+  if (text) {
+    content.push({ type: 'text', text: text });
   }
 
   return content;

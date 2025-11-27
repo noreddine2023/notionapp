@@ -9,7 +9,6 @@ import type { MentionItem } from './editor/types/editor';
  */
 const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [content, setContent] = useState<JSONContent>(sampleDocument);
 
   // Toggle theme
   const toggleTheme = useCallback(() => {
@@ -17,9 +16,8 @@ const App: React.FC = () => {
     document.documentElement.setAttribute('data-theme', theme === 'light' ? 'dark' : 'light');
   }, [theme]);
 
-  // Handle content change
+  // Handle content change (just log, no state update to prevent re-render loops)
   const handleChange = useCallback((newContent: JSONContent) => {
-    setContent(newContent);
     console.log('Content updated:', newContent);
   }, []);
 
@@ -73,7 +71,7 @@ const App: React.FC = () => {
       {/* Editor */}
       <main className="app-main">
         <EditorLayout
-          initialValue={content}
+          initialValue={sampleDocument}
           onChange={handleChange}
           onImageUpload={handleImageUpload}
           onMentionSearch={handleMentionSearch}

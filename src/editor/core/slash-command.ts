@@ -44,7 +44,7 @@ export const SlashCommandExtension = Extension.create({
             };
           },
 
-          apply(tr, value, _oldState, newState): SlashCommandState {
+          apply(_tr, _value, _oldState, newState): SlashCommandState {
             const { selection } = newState;
             const { $from } = selection;
 
@@ -100,6 +100,8 @@ export const SlashCommandExtension = Extension.create({
         },
 
         view() {
+          let lastState: SlashCommandState | null = null;
+          
           return {
             update(view) {
               const state = slashCommandPluginKey.getState(view.state);
@@ -114,10 +116,21 @@ export const SlashCommandExtension = Extension.create({
                   left: coords.left - editorRect.left,
                 };
 
-                extension.storage.onStateChange({
+                const newState = {
                   ...state,
                   position,
-                });
+                };
+                
+                // Only call callback if state actually changed
+                const hasChanged = 
+                  !lastState ||
+                  lastState.isOpen !== newState.isOpen ||
+                  lastState.query !== newState.query;
+                  
+                if (hasChanged) {
+                  lastState = newState;
+                  extension.storage.onStateChange(newState);
+                }
               }
             },
           };
@@ -136,12 +149,13 @@ export const SlashCommandExtension = Extension.create({
         },
       clearSlashCommand:
         () =>
-        ({ tr, dispatch }) => {
+        ({ editor, dispatch }) => {
           if (dispatch) {
             // Optionally clear the "/" from the editor
-            const state = slashCommandPluginKey.getState(tr);
+            const state = slashCommandPluginKey.getState(editor.state);
             if (state?.range) {
-              tr.delete(state.range.from, state.range.to);
+              const tr = editor.state.tr.delete(state.range.from, state.range.to);
+              editor.view.dispatch(tr);
             }
           }
           return true;

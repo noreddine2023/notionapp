@@ -34,7 +34,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const editor = editorRef.current?.getEditor() ?? null;
 
   // Set up persistence
-  const { status, lastSaved, saveDocument } = usePersistence(editor, {
+  const { status, lastSaved } = usePersistence(editor, {
     documentId,
     skipInitialLoad: !documentId,
   });
@@ -63,7 +63,17 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     };
 
     traverse(content);
-    setHeadings(newHeadings);
+    
+    // Only update if headings actually changed
+    setHeadings((prevHeadings) => {
+      const isSame = prevHeadings.length === newHeadings.length && 
+        prevHeadings.every((h, i) => 
+          h.id === newHeadings[i]?.id && 
+          h.text === newHeadings[i]?.text && 
+          h.level === newHeadings[i]?.level
+        );
+      return isSame ? prevHeadings : newHeadings;
+    });
   }, []);
 
   // Handle content changes

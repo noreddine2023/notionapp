@@ -149,7 +149,7 @@ app.post('/api/documents/:id/draft', (req: Request, res: Response) => {
  * Handle image uploads
  * In production, this would save to a file storage service
  */
-app.post('/api/upload', (req: Request, res: Response) => {
+app.post('/api/upload', (_req: Request, res: Response) => {
   // For demo purposes, we'll just return a placeholder URL
   // In production, implement actual file upload logic
   const timestamp = Date.now();
@@ -162,7 +162,6 @@ app.post('/api/upload', (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/health
  * Health check endpoint
  */
 app.get('/api/health', (_req: Request, res: Response) => {

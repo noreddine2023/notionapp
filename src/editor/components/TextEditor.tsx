@@ -1,14 +1,12 @@
-import React, { forwardRef, useImperativeHandle, useCallback, useState, useEffect } from 'react';
+import { forwardRef, useImperativeHandle, useCallback, useState, useEffect } from 'react';
 import { EditorContent, BubbleMenu } from '@tiptap/react';
-import type { JSONContent } from '@tiptap/core';
+import type { Editor } from '@tiptap/core';
 import { useTextEditor } from '../hooks/useTextEditor';
 import { TopToolbar } from './TopToolbar';
 import { BubbleMenuToolbar } from './BubbleMenuToolbar';
 import { SlashCommandMenu } from './SlashCommandMenu';
-import { BlockControls } from './BlockControls';
 import type { TextEditorProps, TextEditorRef, MentionItem } from '../types/editor';
 import type { SlashCommandState } from '../core/slash-command';
-import type { BlockHandleState } from '../core/block-handle';
 import '../styles/editor.css';
 
 /**
@@ -41,14 +39,6 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>(
       range: null,
     });
 
-    // Block handle state
-    const [blockHandleState, setBlockHandleState] = useState<BlockHandleState>({
-      visible: false,
-      position: { top: 0, left: 0 },
-      nodePos: 0,
-      nodeType: '',
-    });
-
     // Initialize editor
     const {
       editor,
@@ -76,12 +66,7 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>(
       }
     }, [editor]);
 
-    // Set up block handle callback
-    useEffect(() => {
-      if (editor) {
-        editor.commands.setBlockHandleCallback(setBlockHandleState);
-      }
-    }, [editor]);
+    // Block handle is now simpler - no automatic tracking needed
 
     // Expose ref methods
     useImperativeHandle(ref, () => ({
@@ -116,7 +101,7 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>(
     }, [editor, onImageUpload]);
 
     // Handle slash command execution
-    const handleSlashCommand = useCallback((action: (editor: NonNullable<typeof editor>) => void) => {
+    const handleSlashCommand = useCallback((action: (ed: Editor) => void) => {
       if (!editor) return;
 
       // Remove the slash query text
@@ -172,14 +157,6 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>(
 
         {/* Editor Content */}
         <div className="editor-wrapper" style={{ minHeight }}>
-          {/* Block Controls (drag handle + plus button) */}
-          {!readOnly && (
-            <BlockControls
-              editor={editor}
-              state={blockHandleState}
-            />
-          )}
-
           {/* Main Editor */}
           <EditorContent editor={editor} />
 

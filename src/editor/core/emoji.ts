@@ -55,11 +55,7 @@ export const EmojiExtension = Extension.create({
       rules.push(
         textInputRule({
           find: new RegExp(`(?:^|\\s)(${escapedShortcut})$`),
-          replace: (match) => {
-            // Replace the shortcut with emoji, preserving leading space if present
-            const hasLeadingSpace = match.startsWith(' ');
-            return (hasLeadingSpace ? ' ' : '') + emoji;
-          },
+          replace: emoji,
         })
       );
     }

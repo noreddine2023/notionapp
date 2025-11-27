@@ -1,5 +1,4 @@
 import { Extension } from '@tiptap/core';
-import type { Editor, EditorOptions } from '@tiptap/core';
 
 // Note: This file provides the architecture for Yjs collaboration
 // Actual Yjs dependencies would need to be installed:
@@ -72,7 +71,6 @@ export function createCollaborationExtensions(options: CollaborationOptions): Ex
     provider,
     websocketUrl,
     signalingServers,
-    onUsersChange,
   } = options;
 
   // This is a placeholder implementation

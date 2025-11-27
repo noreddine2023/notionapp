@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import type { Comment, CommentReply } from '../types/editor';
+import type { Comment } from '../types/editor';
 
 interface CommentsSidebarProps {
   comments: Comment[];

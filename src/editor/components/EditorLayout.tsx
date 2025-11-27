@@ -3,8 +3,9 @@ import type { JSONContent } from '@tiptap/core';
 import { TextEditor } from './TextEditor';
 import { TableOfContents } from './TableOfContents';
 import { CommentsSidebar } from './CommentsSidebar';
+import { PagesSidebar } from './PagesSidebar';
 import { usePersistence } from '../hooks/usePersistence';
-import type { EditorLayoutProps, TextEditorRef, Comment, TocHeading, SaveStatus } from '../types/editor';
+import type { EditorLayoutProps, TextEditorRef, Comment, TocHeading, SaveStatus, Page } from '../types/editor';
 
 /**
  * Full editor layout with sidebars for TOC and comments
@@ -28,6 +29,10 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const [headings, setHeadings] = useState<TocHeading[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
+  
+  // Pages sidebar state
+  const [isPagesSidebarCollapsed, setIsPagesSidebarCollapsed] = useState(false);
+  const [activePageId, setActivePageId] = useState<string>('1');
 
   // Get editor instance for persistence
   const editor = editorRef.current?.getEditor() ?? null;
@@ -191,9 +196,34 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     );
   }, []);
 
+  // Handle page selection
+  const handlePageSelect = useCallback((page: Page) => {
+    setActivePageId(page.id);
+    console.log('Selected page:', page.title);
+  }, []);
+
+  // Handle new page creation
+  const handleNewPage = useCallback(() => {
+    console.log('Create new page');
+  }, []);
+
+  // Toggle pages sidebar
+  const handleTogglePagesSidebar = useCallback(() => {
+    setIsPagesSidebarCollapsed((prev) => !prev);
+  }, []);
+
   return (
     <div className="editor-layout-modern">
-      {/* Left Sidebar: Outline */}
+      {/* Left Sidebar: Pages Navigation */}
+      <PagesSidebar
+        activePageId={activePageId}
+        onPageSelect={handlePageSelect}
+        onNewPage={handleNewPage}
+        isCollapsed={isPagesSidebarCollapsed}
+        onToggleCollapse={handleTogglePagesSidebar}
+      />
+
+      {/* Second Left Sidebar: Outline/Table of Contents */}
       {showToc && (
         <TableOfContents
           headings={headings}

@@ -132,7 +132,7 @@ interface PagesSidebarProps {
 interface PageItemProps {
   page: Page;
   level: number;
-  isActive: boolean;
+  activePageId: string;
   expandedIds: Set<string>;
   onToggleExpand: (pageId: string) => void;
   onSelect: (page: Page) => void;
@@ -141,13 +141,14 @@ interface PageItemProps {
 const PageItem: React.FC<PageItemProps> = ({
   page,
   level,
-  isActive,
+  activePageId,
   expandedIds,
   onToggleExpand,
   onSelect,
 }) => {
   const hasChildren = page.children && page.children.length > 0;
   const isExpanded = expandedIds.has(page.id);
+  const isActive = page.id === activePageId;
 
   return (
     <div className="page-item-wrapper">
@@ -173,12 +174,12 @@ const PageItem: React.FC<PageItemProps> = ({
       </div>
       {hasChildren && isExpanded && (
         <div className="page-children">
-          {page.children!.map((child) => (
+          {page.children?.map((child) => (
             <PageItem
               key={child.id}
               page={child}
               level={level + 1}
-              isActive={isActive}
+              activePageId={activePageId}
               expandedIds={expandedIds}
               onToggleExpand={onToggleExpand}
               onSelect={onSelect}
@@ -288,7 +289,7 @@ export const PagesSidebar: React.FC<PagesSidebarProps> = ({
               key={page.id}
               page={page}
               level={0}
-              isActive={localActivePageId === page.id}
+              activePageId={localActivePageId}
               expandedIds={expandedIds}
               onToggleExpand={handleToggleExpand}
               onSelect={handlePageSelect}

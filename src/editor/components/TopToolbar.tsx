@@ -350,7 +350,7 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
           height: 36px;
           padding: 0 0.75rem;
           border: 1px solid var(--editor-border);
-          border-radius: var(--editor-radius-sm, 6px);
+          border-radius: var(--editor-radius-sm);
           background: var(--editor-bg);
           color: var(--editor-text);
           font-size: 0.875rem;
@@ -367,7 +367,7 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
         .toolbar-select:focus {
           outline: none;
           border-color: var(--editor-primary);
-          box-shadow: 0 0 0 3px var(--editor-primary-light, rgba(99, 102, 241, 0.1));
+          box-shadow: 0 0 0 3px var(--editor-primary-light);
         }
 
         .color-select {
@@ -381,7 +381,7 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
           width: 36px;
           height: 36px;
           border: none;
-          border-radius: var(--editor-radius-sm, 6px);
+          border-radius: var(--editor-radius-sm);
           background: transparent;
           color: var(--editor-text);
           font-size: 14px;
@@ -391,11 +391,11 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
         }
 
         .toolbar-button:hover:not(:disabled) {
-          background: var(--editor-hover-bg, #f1f5f9);
+          background: var(--editor-hover-bg);
         }
 
         .toolbar-button.active {
-          background: var(--editor-primary-light, rgba(99, 102, 241, 0.1));
+          background: var(--editor-primary-light);
           color: var(--editor-primary);
         }
 

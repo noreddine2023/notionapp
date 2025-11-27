@@ -189,7 +189,7 @@ const slashMenuStyles = `
     overflow-y: auto;
     background: var(--editor-menu-bg);
     border: 1px solid var(--editor-border);
-    border-radius: var(--editor-radius-lg, 14px);
+    border-radius: var(--editor-radius-lg);
     box-shadow: var(--editor-menu-shadow);
     padding: 0.625rem;
   }
@@ -225,7 +225,7 @@ const slashMenuStyles = `
     width: 100%;
     padding: 0.625rem 0.75rem;
     border: none;
-    border-radius: var(--editor-radius-md, 10px);
+    border-radius: var(--editor-radius-md);
     background: transparent;
     color: var(--editor-text);
     cursor: pointer;
@@ -235,7 +235,7 @@ const slashMenuStyles = `
 
   .slash-command-item:hover,
   .slash-command-item.selected {
-    background: var(--editor-primary-light, rgba(99, 102, 241, 0.1));
+    background: var(--editor-primary-light);
   }
 
   .slash-command-icon {
@@ -244,7 +244,7 @@ const slashMenuStyles = `
     justify-content: center;
     width: 38px;
     height: 38px;
-    border-radius: var(--editor-radius-sm, 6px);
+    border-radius: var(--editor-radius-sm);
     background: var(--editor-code-bg);
     font-size: 15px;
     flex-shrink: 0;

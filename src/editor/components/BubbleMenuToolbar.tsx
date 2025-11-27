@@ -195,7 +195,7 @@ const bubbleMenuStyles = `
     padding: 0.375rem;
     background: var(--editor-menu-bg);
     border: 1px solid var(--editor-border);
-    border-radius: var(--editor-radius-md, 10px);
+    border-radius: var(--editor-radius-md);
     box-shadow: var(--editor-menu-shadow);
   }
 
@@ -210,7 +210,7 @@ const bubbleMenuStyles = `
     width: 32px;
     height: 32px;
     border: none;
-    border-radius: var(--editor-radius-sm, 6px);
+    border-radius: var(--editor-radius-sm);
     background: transparent;
     color: var(--editor-text);
     font-size: 13px;
@@ -220,11 +220,11 @@ const bubbleMenuStyles = `
   }
 
   .bubble-button:hover {
-    background: var(--editor-hover-bg, #f1f5f9);
+    background: var(--editor-hover-bg);
   }
 
   .bubble-button.active {
-    background: var(--editor-primary-light, rgba(99, 102, 241, 0.1));
+    background: var(--editor-primary-light);
     color: var(--editor-primary);
   }
 
@@ -239,7 +239,7 @@ const bubbleMenuStyles = `
     width: 220px;
     padding: 0.5rem 0.625rem;
     border: 1px solid var(--editor-border);
-    border-radius: var(--editor-radius-sm, 6px);
+    border-radius: var(--editor-radius-sm);
     background: var(--editor-bg);
     color: var(--editor-text);
     font-size: 0.875rem;
@@ -249,7 +249,7 @@ const bubbleMenuStyles = `
 
   .link-input:focus {
     border-color: var(--editor-primary);
-    box-shadow: 0 0 0 3px var(--editor-primary-light, rgba(99, 102, 241, 0.1));
+    box-shadow: 0 0 0 3px var(--editor-primary-light);
   }
 
   .link-input::placeholder {
@@ -263,7 +263,7 @@ const bubbleMenuStyles = `
     width: 28px;
     height: 28px;
     border: none;
-    border-radius: var(--editor-radius-sm, 6px);
+    border-radius: var(--editor-radius-sm);
     background: transparent;
     color: var(--editor-text);
     font-size: 12px;
@@ -273,11 +273,11 @@ const bubbleMenuStyles = `
   }
 
   .link-btn:hover {
-    background: var(--editor-hover-bg, #f1f5f9);
+    background: var(--editor-hover-bg);
   }
 
   .link-btn.confirm {
-    color: var(--editor-success, #10b981);
+    color: var(--editor-success);
   }
 
   .link-btn.confirm:hover {
@@ -285,7 +285,7 @@ const bubbleMenuStyles = `
   }
 
   .link-btn.remove {
-    color: var(--editor-error, #ef4444);
+    color: var(--editor-error);
   }
 
   .link-btn.remove:hover {

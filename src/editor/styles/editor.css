@@ -1,0 +1,590 @@
+/* ==========================================================================
+   Editor Base Styles
+   ========================================================================== */
+
+/* CSS Variables for theming */
+:root {
+  --editor-bg: #ffffff;
+  --editor-text: #1a1a1a;
+  --editor-text-muted: #6b7280;
+  --editor-border: #e5e7eb;
+  --editor-border-hover: #d1d5db;
+  --editor-primary: #3b82f6;
+  --editor-primary-hover: #2563eb;
+  --editor-selection: rgba(59, 130, 246, 0.2);
+  --editor-placeholder: #9ca3af;
+  --editor-highlight: #fef08a;
+  --editor-code-bg: #f3f4f6;
+  --editor-blockquote-border: #e5e7eb;
+  --editor-dropcursor-color: #3b82f6;
+  --editor-toolbar-bg: #ffffff;
+  --editor-toolbar-border: #e5e7eb;
+  --editor-menu-bg: #ffffff;
+  --editor-menu-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --editor-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --editor-font-mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* Dark mode */
+[data-theme='dark'] {
+  --editor-bg: #1f2937;
+  --editor-text: #f9fafb;
+  --editor-text-muted: #9ca3af;
+  --editor-border: #374151;
+  --editor-border-hover: #4b5563;
+  --editor-primary: #60a5fa;
+  --editor-primary-hover: #3b82f6;
+  --editor-selection: rgba(96, 165, 250, 0.3);
+  --editor-placeholder: #6b7280;
+  --editor-highlight: rgba(254, 240, 138, 0.3);
+  --editor-code-bg: #111827;
+  --editor-blockquote-border: #4b5563;
+  --editor-toolbar-bg: #1f2937;
+  --editor-toolbar-border: #374151;
+  --editor-menu-bg: #1f2937;
+  --editor-menu-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   Editor Container
+   ========================================================================== */
+
+.editor-container {
+  position: relative;
+  background: var(--editor-bg);
+  color: var(--editor-text);
+  font-family: var(--editor-font-family);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.editor-wrapper {
+  position: relative;
+  padding: 1rem;
+  min-height: 200px;
+}
+
+/* ==========================================================================
+   Tiptap Editor
+   ========================================================================== */
+
+.tiptap-editor {
+  outline: none;
+  min-height: inherit;
+}
+
+.tiptap-editor:focus {
+  outline: none;
+}
+
+/* Placeholder */
+.tiptap-editor p.is-editor-empty:first-child::before {
+  color: var(--editor-placeholder);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap-editor p.is-empty::before {
+  color: var(--editor-placeholder);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Selection */
+.tiptap-editor ::selection {
+  background: var(--editor-selection);
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+.tiptap-editor h1,
+.tiptap-editor h2,
+.tiptap-editor h3,
+.tiptap-editor h4,
+.tiptap-editor h5,
+.tiptap-editor h6 {
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.tiptap-editor h1:first-child,
+.tiptap-editor h2:first-child,
+.tiptap-editor h3:first-child,
+.tiptap-editor h4:first-child,
+.tiptap-editor h5:first-child,
+.tiptap-editor h6:first-child {
+  margin-top: 0;
+}
+
+.tiptap-editor h1 { font-size: 2em; }
+.tiptap-editor h2 { font-size: 1.5em; }
+.tiptap-editor h3 { font-size: 1.25em; }
+.tiptap-editor h4 { font-size: 1.1em; }
+.tiptap-editor h5 { font-size: 1em; }
+.tiptap-editor h6 { font-size: 0.9em; color: var(--editor-text-muted); }
+
+.tiptap-editor p {
+  margin: 0 0 1em 0;
+}
+
+.tiptap-editor p:last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Inline Formatting
+   ========================================================================== */
+
+.tiptap-editor strong {
+  font-weight: 600;
+}
+
+.tiptap-editor em {
+  font-style: italic;
+}
+
+.tiptap-editor u {
+  text-decoration: underline;
+}
+
+.tiptap-editor s {
+  text-decoration: line-through;
+}
+
+.tiptap-editor code {
+  background: var(--editor-code-bg);
+  border-radius: 4px;
+  font-family: var(--editor-font-mono);
+  font-size: 0.9em;
+  padding: 0.15em 0.3em;
+}
+
+.tiptap-editor mark {
+  background: var(--editor-highlight);
+  border-radius: 2px;
+  padding: 0.1em 0.2em;
+}
+
+.tiptap-editor a {
+  color: var(--editor-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.tiptap-editor a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ==========================================================================
+   Lists
+   ========================================================================== */
+
+.tiptap-editor ul,
+.tiptap-editor ol {
+  margin: 0 0 1em 0;
+  padding-left: 1.5em;
+}
+
+.tiptap-editor ul {
+  list-style-type: disc;
+}
+
+.tiptap-editor ol {
+  list-style-type: decimal;
+}
+
+.tiptap-editor li {
+  margin-bottom: 0.25em;
+}
+
+.tiptap-editor li p {
+  margin: 0;
+}
+
+.tiptap-editor li > ul,
+.tiptap-editor li > ol {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+}
+
+/* Task List */
+.tiptap-editor ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-editor ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tiptap-editor ul[data-type='taskList'] li > label {
+  flex: 0 0 auto;
+  margin-top: 0.25rem;
+  user-select: none;
+}
+
+.tiptap-editor ul[data-type='taskList'] li > div {
+  flex: 1 1 auto;
+}
+
+.tiptap-editor ul[data-type='taskList'] input[type='checkbox'] {
+  cursor: pointer;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--editor-primary);
+}
+
+.tiptap-editor ul[data-type='taskList'] li[data-checked='true'] > div {
+  text-decoration: line-through;
+  color: var(--editor-text-muted);
+}
+
+/* ==========================================================================
+   Blockquote
+   ========================================================================== */
+
+.tiptap-editor blockquote {
+  border-left: 3px solid var(--editor-blockquote-border);
+  margin: 1em 0;
+  padding-left: 1em;
+  color: var(--editor-text-muted);
+}
+
+.tiptap-editor blockquote p {
+  margin: 0;
+}
+
+/* ==========================================================================
+   Code Block
+   ========================================================================== */
+
+.tiptap-editor pre {
+  background: var(--editor-code-bg);
+  border-radius: 8px;
+  font-family: var(--editor-font-mono);
+  font-size: 0.875em;
+  margin: 1em 0;
+  overflow-x: auto;
+  padding: 1em;
+}
+
+.tiptap-editor pre code {
+  background: none;
+  border-radius: 0;
+  font-size: inherit;
+  padding: 0;
+}
+
+/* Syntax highlighting (lowlight) */
+.tiptap-editor pre .hljs-comment,
+.tiptap-editor pre .hljs-quote { color: #6a737d; }
+.tiptap-editor pre .hljs-keyword,
+.tiptap-editor pre .hljs-selector-tag { color: #d73a49; }
+.tiptap-editor pre .hljs-string,
+.tiptap-editor pre .hljs-attr { color: #032f62; }
+.tiptap-editor pre .hljs-number,
+.tiptap-editor pre .hljs-literal { color: #005cc5; }
+.tiptap-editor pre .hljs-built_in { color: #6f42c1; }
+.tiptap-editor pre .hljs-function .hljs-title { color: #6f42c1; }
+
+[data-theme='dark'] .tiptap-editor pre .hljs-comment,
+[data-theme='dark'] .tiptap-editor pre .hljs-quote { color: #8b949e; }
+[data-theme='dark'] .tiptap-editor pre .hljs-keyword,
+[data-theme='dark'] .tiptap-editor pre .hljs-selector-tag { color: #ff7b72; }
+[data-theme='dark'] .tiptap-editor pre .hljs-string,
+[data-theme='dark'] .tiptap-editor pre .hljs-attr { color: #a5d6ff; }
+[data-theme='dark'] .tiptap-editor pre .hljs-number,
+[data-theme='dark'] .tiptap-editor pre .hljs-literal { color: #79c0ff; }
+[data-theme='dark'] .tiptap-editor pre .hljs-built_in { color: #d2a8ff; }
+[data-theme='dark'] .tiptap-editor pre .hljs-function .hljs-title { color: #d2a8ff; }
+
+/* ==========================================================================
+   Horizontal Rule
+   ========================================================================== */
+
+.tiptap-editor hr {
+  border: none;
+  border-top: 2px solid var(--editor-border);
+  margin: 2em 0;
+}
+
+/* ==========================================================================
+   Images
+   ========================================================================== */
+
+.tiptap-editor img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  margin: 1em 0;
+}
+
+.tiptap-editor img.ProseMirror-selectednode {
+  outline: 2px solid var(--editor-primary);
+}
+
+/* Image with caption */
+.image-with-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1em 0;
+}
+
+.image-with-caption.align-left {
+  align-items: flex-start;
+}
+
+.image-with-caption.align-right {
+  align-items: flex-end;
+}
+
+.image-with-caption img {
+  margin: 0;
+  border-radius: 4px;
+}
+
+.image-with-caption .image-caption {
+  color: var(--editor-text-muted);
+  font-size: 0.875em;
+  margin-top: 0.5em;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+.tiptap-editor table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  overflow: hidden;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.tiptap-editor table td,
+.tiptap-editor table th {
+  border: 1px solid var(--editor-border);
+  box-sizing: border-box;
+  min-width: 1em;
+  padding: 0.5em 0.75em;
+  position: relative;
+  vertical-align: top;
+}
+
+.tiptap-editor table th {
+  background: var(--editor-code-bg);
+  font-weight: 600;
+  text-align: left;
+}
+
+.tiptap-editor table .selectedCell {
+  background: var(--editor-selection);
+}
+
+.tiptap-editor table .column-resize-handle {
+  background-color: var(--editor-primary);
+  bottom: -2px;
+  pointer-events: none;
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 4px;
+}
+
+.tiptap-editor .tableWrapper {
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+/* Table resize cursor */
+.tiptap-editor.resize-cursor {
+  cursor: col-resize;
+}
+
+/* ==========================================================================
+   Mentions
+   ========================================================================== */
+
+.tiptap-editor .mention {
+  background: var(--editor-selection);
+  border-radius: 4px;
+  color: var(--editor-primary);
+  font-weight: 500;
+  padding: 0.1em 0.3em;
+}
+
+/* ==========================================================================
+   Comment Highlights
+   ========================================================================== */
+
+.tiptap-editor .comment-highlight {
+  background: rgba(255, 235, 59, 0.3);
+  border-bottom: 2px solid #ffc107;
+  cursor: pointer;
+}
+
+.tiptap-editor .comment-highlight.resolved {
+  background: rgba(200, 200, 200, 0.2);
+  border-bottom-color: #9ca3af;
+}
+
+/* ==========================================================================
+   Dropcursor
+   ========================================================================== */
+
+.ProseMirror-dropcursor {
+  color: var(--editor-dropcursor-color) !important;
+}
+
+/* ==========================================================================
+   Gapcursor
+   ========================================================================== */
+
+.ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+}
+
+.ProseMirror-gapcursor::after {
+  animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+  border-top: 1px solid var(--editor-text);
+  content: '';
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+}
+
+@keyframes ProseMirror-cursor-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+
+/* ==========================================================================
+   Text Alignment
+   ========================================================================== */
+
+.tiptap-editor [style*='text-align: left'] {
+  text-align: left;
+}
+
+.tiptap-editor [style*='text-align: center'] {
+  text-align: center;
+}
+
+.tiptap-editor [style*='text-align: right'] {
+  text-align: right;
+}
+
+.tiptap-editor [style*='text-align: justify'] {
+  text-align: justify;
+}
+
+/* ==========================================================================
+   Block Controls
+   ========================================================================== */
+
+.block-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.block-controls.visible {
+  opacity: 1;
+}
+
+.block-control-button {
+  align-items: center;
+  background: var(--editor-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  color: var(--editor-text-muted);
+  cursor: pointer;
+  display: flex;
+  height: 24px;
+  justify-content: center;
+  padding: 0;
+  width: 24px;
+  transition: all 0.15s ease;
+}
+
+.block-control-button:hover {
+  background: var(--editor-code-bg);
+  border-color: var(--editor-border-hover);
+  color: var(--editor-text);
+}
+
+.drag-handle {
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* ==========================================================================
+   Save Status
+   ========================================================================== */
+
+.save-status {
+  align-items: center;
+  color: var(--editor-text-muted);
+  display: flex;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+}
+
+.save-status.saving {
+  color: var(--editor-primary);
+}
+
+.save-status.saved {
+  color: #10b981;
+}
+
+.save-status.error {
+  color: #ef4444;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .editor-wrapper {
+    padding: 0.75rem;
+  }
+
+  .tiptap-editor {
+    font-size: 15px;
+  }
+
+  .tiptap-editor h1 { font-size: 1.75em; }
+  .tiptap-editor h2 { font-size: 1.35em; }
+  .tiptap-editor h3 { font-size: 1.15em; }
+}

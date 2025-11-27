@@ -192,59 +192,73 @@ const bubbleMenuStyles = `
   .bubble-menu {
     display: flex;
     align-items: center;
-    padding: 0.375rem;
+    padding: 0.375rem 0.5rem;
     background: var(--editor-menu-bg);
     border: 1px solid var(--editor-border);
-    border-radius: var(--editor-radius-md);
-    box-shadow: var(--editor-menu-shadow);
+    border-radius: var(--editor-radius-lg);
+    box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.15), 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .bubble-menu.link-input-mode {
-    padding: 0.375rem 0.625rem;
+    padding: 0.375rem 0.75rem;
   }
 
   .bubble-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border: none;
-    border-radius: var(--editor-radius-sm);
+    border-radius: var(--editor-radius-md);
     background: transparent;
-    color: var(--editor-text);
-    font-size: 13px;
-    font-weight: 500;
+    color: var(--editor-text-muted);
+    font-size: 12px;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .bubble-button:hover {
     background: var(--editor-hover-bg);
+    color: var(--editor-text);
+    transform: translateY(-1px);
   }
 
   .bubble-button.active {
-    background: var(--editor-primary-light);
-    color: var(--editor-primary);
+    background: var(--editor-primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  }
+
+  .bubble-button.active:hover {
+    background: var(--editor-primary-hover);
+  }
+
+  .bubble-button:active {
+    transform: scale(0.95);
   }
 
   .bubble-divider {
     width: 1px;
-    height: 22px;
+    height: 20px;
     background: var(--editor-border);
     margin: 0 0.375rem;
+    opacity: 0.6;
   }
 
   .link-input {
-    width: 220px;
-    padding: 0.5rem 0.625rem;
+    width: 200px;
+    padding: 0.5rem 0.75rem;
     border: 1px solid var(--editor-border);
-    border-radius: var(--editor-radius-sm);
+    border-radius: var(--editor-radius-md);
     background: var(--editor-bg);
     color: var(--editor-text);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .link-input:focus {
@@ -260,35 +274,48 @@ const bubbleMenuStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border: none;
-    border-radius: var(--editor-radius-sm);
+    border-radius: var(--editor-radius-md);
     background: transparent;
-    color: var(--editor-text);
-    font-size: 12px;
+    color: var(--editor-text-muted);
+    font-size: 11px;
     cursor: pointer;
     margin-left: 0.375rem;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .link-btn:hover {
     background: var(--editor-hover-bg);
+    transform: translateY(-1px);
   }
 
   .link-btn.confirm {
-    color: var(--editor-success);
+    color: white;
+    background: var(--editor-success);
   }
 
   .link-btn.confirm:hover {
-    background: rgba(16, 185, 129, 0.1);
+    background: #059669;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
   }
 
   .link-btn.remove {
-    color: var(--editor-error);
+    color: white;
+    background: var(--editor-error);
   }
 
   .link-btn.remove:hover {
-    background: rgba(239, 68, 68, 0.1);
+    background: #dc2626;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+  }
+
+  .link-btn.cancel {
+    color: var(--editor-text-muted);
+  }
+
+  .link-btn.cancel:hover {
+    color: var(--editor-text);
   }
 `;

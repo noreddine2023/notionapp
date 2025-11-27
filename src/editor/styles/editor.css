@@ -77,12 +77,46 @@
   font-size: 16px;
   line-height: 1.7;
   border-radius: var(--editor-radius-lg);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .editor-wrapper {
   position: relative;
-  padding: 2rem 2.5rem;
+  padding: 3rem 4rem;
   min-height: 200px;
+  max-width: 850px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Modern scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--editor-border) transparent;
+}
+
+.editor-wrapper::-webkit-scrollbar {
+  width: 10px;
+}
+
+.editor-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 5px;
+}
+
+.editor-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--editor-border) 0%, var(--editor-border-hover) 100%);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.editor-wrapper::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--editor-border-hover) 0%, var(--editor-primary) 100%);
+  background-clip: padding-box;
 }
 
 /* ==========================================================================
@@ -628,7 +662,8 @@
 
 @media (max-width: 768px) {
   .editor-wrapper {
-    padding: 1.25rem 1rem;
+    padding: 1.5rem 1.25rem;
+    max-width: 100%;
   }
 
   .tiptap-editor {
@@ -638,4 +673,11 @@
   .tiptap-editor h1 { font-size: 1.875em; }
   .tiptap-editor h2 { font-size: 1.5em; }
   .tiptap-editor h3 { font-size: 1.25em; }
+}
+
+@media (max-width: 1024px) {
+  .editor-wrapper {
+    padding: 2rem 2rem;
+    max-width: 100%;
+  }
 }

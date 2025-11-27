@@ -253,6 +253,20 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           display: flex;
           flex-direction: column;
           background: var(--editor-bg);
+          position: relative;
+        }
+
+        .editor-main::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 120px;
+          background: linear-gradient(180deg, var(--editor-bg-secondary) 0%, transparent 100%);
+          pointer-events: none;
+          z-index: 0;
+          opacity: 0.5;
         }
 
         .editor-status-bar {
@@ -261,6 +275,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           display: flex;
           justify-content: flex-end;
           background: var(--editor-bg-secondary);
+          position: relative;
+          z-index: 1;
         }
       `}</style>
     </div>

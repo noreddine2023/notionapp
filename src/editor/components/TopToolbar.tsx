@@ -326,102 +326,143 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
         .top-toolbar {
           display: flex;
           align-items: center;
-          padding: 0.75rem 1rem;
-          border-bottom: 1px solid var(--editor-toolbar-border);
-          background: var(--editor-toolbar-bg);
+          justify-content: center;
+          padding: 0.625rem 1.25rem;
+          background: linear-gradient(180deg, var(--editor-toolbar-bg) 0%, var(--editor-bg) 100%);
+          border-bottom: 1px solid var(--editor-border);
           flex-wrap: wrap;
-          gap: 0.375rem;
+          gap: 0.5rem;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
         }
 
         .toolbar-group {
           display: flex;
           align-items: center;
-          gap: 3px;
+          gap: 2px;
+          background: var(--editor-bg-secondary);
+          border: 1px solid var(--editor-border);
+          border-radius: var(--editor-radius-lg);
+          padding: 4px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toolbar-group:hover {
+          border-color: var(--editor-border-hover);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .toolbar-divider {
           width: 1px;
-          height: 28px;
-          background: var(--editor-border);
-          margin: 0 0.625rem;
+          height: 24px;
+          background: transparent;
+          margin: 0 0.25rem;
         }
 
         .toolbar-select {
-          height: 36px;
+          height: 32px;
           padding: 0 0.75rem;
-          border: 1px solid var(--editor-border);
-          border-radius: var(--editor-radius-sm);
-          background: var(--editor-bg);
+          border: none;
+          border-radius: var(--editor-radius-md);
+          background: transparent;
           color: var(--editor-text);
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          min-width: 110px;
         }
 
         .toolbar-select:hover {
-          border-color: var(--editor-border-hover);
-          background: var(--editor-code-bg);
+          background: var(--editor-hover-bg);
         }
 
         .toolbar-select:focus {
           outline: none;
-          border-color: var(--editor-primary);
-          box-shadow: 0 0 0 3px var(--editor-primary-light);
+          background: var(--editor-primary-light);
+          color: var(--editor-primary);
         }
 
         .color-select {
-          width: 88px;
+          min-width: 95px;
         }
 
         .toolbar-button {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           border: none;
-          border-radius: var(--editor-radius-sm);
+          border-radius: var(--editor-radius-md);
           background: transparent;
-          color: var(--editor-text);
-          font-size: 14px;
-          font-weight: 500;
+          color: var(--editor-text-muted);
+          font-size: 13px;
+          font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
         }
 
         .toolbar-button:hover:not(:disabled) {
           background: var(--editor-hover-bg);
+          color: var(--editor-text);
+          transform: translateY(-1px);
         }
 
         .toolbar-button.active {
-          background: var(--editor-primary-light);
-          color: var(--editor-primary);
+          background: var(--editor-primary);
+          color: white;
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .toolbar-button.active:hover {
+          background: var(--editor-primary-hover);
+          transform: translateY(-1px);
         }
 
         .toolbar-button:disabled {
-          opacity: 0.4;
+          opacity: 0.35;
           cursor: not-allowed;
+        }
+
+        .toolbar-button:active:not(:disabled) {
+          transform: scale(0.95);
         }
 
         @media (max-width: 768px) {
           .top-toolbar {
             padding: 0.5rem;
+            gap: 0.375rem;
+          }
+
+          .toolbar-group {
+            padding: 3px;
           }
 
           .toolbar-divider {
-            margin: 0 0.375rem;
+            margin: 0 0.125rem;
           }
 
           .toolbar-button {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
           }
 
           .toolbar-select {
-            height: 32px;
+            height: 28px;
             padding: 0 0.5rem;
-            font-size: 0.8125rem;
+            font-size: 0.75rem;
+            min-width: 90px;
+          }
+
+          .color-select {
+            min-width: 80px;
           }
         }
       `}</style>

@@ -183,26 +183,26 @@ const slashMenuStyles = `
   .slash-command-menu {
     position: absolute;
     z-index: 50;
-    max-height: 320px;
-    min-width: 280px;
-    max-width: 320px;
+    max-height: 360px;
+    min-width: 300px;
+    max-width: 360px;
     overflow-y: auto;
     background: var(--editor-menu-bg);
     border: 1px solid var(--editor-border);
-    border-radius: 8px;
+    border-radius: var(--editor-radius-lg, 14px);
     box-shadow: var(--editor-menu-shadow);
-    padding: 0.5rem;
+    padding: 0.625rem;
   }
 
   .slash-command-empty {
-    padding: 1rem;
+    padding: 1.25rem;
     text-align: center;
     color: var(--editor-text-muted);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
   }
 
   .slash-command-category {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.625rem;
   }
 
   .slash-command-category:last-child {
@@ -210,43 +210,43 @@ const slashMenuStyles = `
   }
 
   .slash-command-category-title {
-    padding: 0.25rem 0.5rem;
+    padding: 0.375rem 0.625rem;
     font-size: 0.6875rem;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     color: var(--editor-text-muted);
   }
 
   .slash-command-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.875rem;
     width: 100%;
-    padding: 0.5rem;
+    padding: 0.625rem 0.75rem;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--editor-radius-md, 10px);
     background: transparent;
     color: var(--editor-text);
     cursor: pointer;
     text-align: left;
-    transition: background 0.1s ease;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .slash-command-item:hover,
   .slash-command-item.selected {
-    background: var(--editor-selection);
+    background: var(--editor-primary-light, rgba(99, 102, 241, 0.1));
   }
 
   .slash-command-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--editor-radius-sm, 6px);
     background: var(--editor-code-bg);
-    font-size: 14px;
+    font-size: 15px;
     flex-shrink: 0;
   }
 
@@ -255,16 +255,17 @@ const slashMenuStyles = `
     min-width: 0;
     display: flex;
     flex-direction: column;
+    gap: 0.125rem;
   }
 
   .slash-command-title {
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: 0.9375rem;
+    font-weight: 600;
     line-height: 1.3;
   }
 
   .slash-command-description {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: var(--editor-text-muted);
     line-height: 1.3;
     white-space: nowrap;

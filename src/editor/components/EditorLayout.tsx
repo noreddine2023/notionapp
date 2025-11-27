@@ -244,6 +244,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           display: flex;
           height: 100%;
           min-height: 500px;
+          background: var(--editor-bg);
         }
 
         .editor-main {
@@ -251,13 +252,15 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           min-width: 0;
           display: flex;
           flex-direction: column;
+          background: var(--editor-bg);
         }
 
         .editor-status-bar {
-          padding: 0.5rem 1rem;
+          padding: 0.625rem 1.25rem;
           border-bottom: 1px solid var(--editor-border);
           display: flex;
           justify-content: flex-end;
+          background: var(--editor-bg-secondary);
         }
       `}</style>
     </div>

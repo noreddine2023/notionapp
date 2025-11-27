@@ -192,61 +192,64 @@ const bubbleMenuStyles = `
   .bubble-menu {
     display: flex;
     align-items: center;
-    padding: 0.25rem;
+    padding: 0.375rem;
     background: var(--editor-menu-bg);
     border: 1px solid var(--editor-border);
-    border-radius: 8px;
+    border-radius: var(--editor-radius-md, 10px);
     box-shadow: var(--editor-menu-shadow);
   }
 
   .bubble-menu.link-input-mode {
-    padding: 0.25rem 0.5rem;
+    padding: 0.375rem 0.625rem;
   }
 
   .bubble-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--editor-radius-sm, 6px);
     background: transparent;
     color: var(--editor-text);
     font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .bubble-button:hover {
-    background: var(--editor-code-bg);
+    background: var(--editor-hover-bg, #f1f5f9);
   }
 
   .bubble-button.active {
-    background: var(--editor-selection);
+    background: var(--editor-primary-light, rgba(99, 102, 241, 0.1));
     color: var(--editor-primary);
   }
 
   .bubble-divider {
     width: 1px;
-    height: 20px;
+    height: 22px;
     background: var(--editor-border);
-    margin: 0 0.25rem;
+    margin: 0 0.375rem;
   }
 
   .link-input {
-    width: 200px;
-    padding: 0.375rem 0.5rem;
+    width: 220px;
+    padding: 0.5rem 0.625rem;
     border: 1px solid var(--editor-border);
-    border-radius: 4px;
+    border-radius: var(--editor-radius-sm, 6px);
     background: var(--editor-bg);
     color: var(--editor-text);
     font-size: 0.875rem;
     outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   .link-input:focus {
     border-color: var(--editor-primary);
+    box-shadow: 0 0 0 3px var(--editor-primary-light, rgba(99, 102, 241, 0.1));
   }
 
   .link-input::placeholder {
@@ -257,27 +260,35 @@ const bubbleMenuStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--editor-radius-sm, 6px);
     background: transparent;
     color: var(--editor-text);
     font-size: 12px;
     cursor: pointer;
-    margin-left: 0.25rem;
-    transition: all 0.15s ease;
+    margin-left: 0.375rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .link-btn:hover {
-    background: var(--editor-code-bg);
+    background: var(--editor-hover-bg, #f1f5f9);
   }
 
   .link-btn.confirm {
-    color: #10b981;
+    color: var(--editor-success, #10b981);
+  }
+
+  .link-btn.confirm:hover {
+    background: rgba(16, 185, 129, 0.1);
   }
 
   .link-btn.remove {
-    color: #ef4444;
+    color: var(--editor-error, #ef4444);
+  }
+
+  .link-btn.remove:hover {
+    background: rgba(239, 68, 68, 0.1);
   }
 `;

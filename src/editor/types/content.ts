@@ -38,7 +38,7 @@ export const emptyDocument: JSONContent = {
 };
 
 /**
- * Sample document for testing
+ * Sample document for testing - Legend of X
  */
 export const sampleDocument: JSONContent = {
   type: 'doc',
@@ -46,61 +46,61 @@ export const sampleDocument: JSONContent = {
     {
       type: 'heading',
       attrs: { level: 1 },
-      content: [{ type: 'text', text: 'Welcome to the Editor' }],
-    },
-    {
-      type: 'paragraph',
-      content: [
-        { type: 'text', text: 'This is a ' },
-        { type: 'text', marks: [{ type: 'bold' }], text: 'rich text editor' },
-        { type: 'text', text: ' powered by ' },
-        { type: 'text', marks: [{ type: 'italic' }], text: 'Tiptap' },
-        { type: 'text', text: '.' },
-      ],
+      content: [{ type: 'text', text: 'Legend Of X' }],
     },
     {
       type: 'heading',
       attrs: { level: 2 },
-      content: [{ type: 'text', text: 'Features' }],
+      content: [
+        { type: 'text', text: 'Chapter 1: ' },
+        { type: 'text', marks: [{ type: 'highlight', attrs: { color: '#bfdbfe' } }], text: 'Awakening' },
+      ],
     },
     {
-      type: 'bulletList',
+      type: 'paragraph',
       content: [
-        {
-          type: 'listItem',
-          content: [
-            {
-              type: 'paragraph',
-              content: [{ type: 'text', text: 'Block-based editing with drag and drop' }],
-            },
-          ],
-        },
-        {
-          type: 'listItem',
-          content: [
-            {
-              type: 'paragraph',
-              content: [{ type: 'text', text: 'Slash commands for quick insertion' }],
-            },
-          ],
-        },
-        {
-          type: 'listItem',
-          content: [
-            {
-              type: 'paragraph',
-              content: [{ type: 'text', text: 'Rich formatting toolbar' }],
-            },
-          ],
-        },
+        { type: 'text', text: 'Lorem ipsum dolor sit amet consectetur. In lorem varius non arcu eget. Odio odio placerat sit enim pretium sed risus vitae. Velit egestas montes convallis cras venenatis suspendisse consequat sit. Tristique et a cras risus lorem nunc leo. Non lorem viverra vitae lectus malesuada cursus. Aenean consequat congue ullamcorper vitae in cras eget placerat et.' },
       ],
+    },
+    {
+      type: 'paragraph',
+      content: [
+        { type: 'text', text: 'Facilisis fames commodo enim vivamus cursus eget eu. Tristique platea duis et tristique ultrices dui diam nunc. Mauris elementum sem lacus viverra suspendisse. Amet blandit egestas urna quis cursus velit ut. Quis fermentum tristique ultrices eleifend tincidunt et. Volutpat elementum hendrerit faucibus lectus orci in tortor amet. Nisi convallis tortor in sed. Fermentum et quisque elit imperdiet id.' },
+      ],
+    },
+    {
+      type: 'heading',
+      attrs: { level: 3 },
+      content: [{ type: 'text', text: 'Part 1: Androids' }],
+    },
+    {
+      type: 'paragraph',
+      content: [
+        { type: 'text', text: 'Lorem ipsum dolor sit amet consectetur. At feugiat ac placerat habitant nec sed ultrices. Rutrum massa ipsum bibendum ac at feugiat felis ante. Purus leo volutpat nulla ut faucibus duis at purus. Sed pretium ut at enim.' },
+      ],
+    },
+    {
+      type: 'heading',
+      attrs: { level: 3 },
+      content: [{ type: 'text', text: 'Part 2: Electric Sheeps' }],
+    },
+    {
+      type: 'paragraph',
+      content: [
+        { type: 'text', text: 'Lorem ipsum dolor sit amet consectetur. At feugiat ac placerat habitant nec sed ultrices. Rutrum massa ipsum bibendum ac at feugiat felis ante. Purus leo volutpat nulla ut faucibus duis at purus. Sed pretium ut at enim.' },
+      ],
+    },
+    {
+      type: 'heading',
+      attrs: { level: 3 },
+      content: [{ type: 'text', text: 'Part 3: Encounter' }],
     },
     {
       type: 'paragraph',
       content: [
         { type: 'text', text: 'Try typing ' },
         { type: 'text', marks: [{ type: 'code' }], text: '/' },
-        { type: 'text', text: ' to see available commands!' },
+        { type: 'text', text: ' to see available commands, or drag blocks to reorder them!' },
       ],
     },
   ],

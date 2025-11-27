@@ -1,25 +1,25 @@
 /* ==========================================================================
-   Editor Base Styles - Modern Design System
+   Editor Base Styles - Modern Clean Design
    ========================================================================== */
 
 /* CSS Variables for theming */
 :root {
-  /* Modern color palette */
-  --editor-bg: #fafbfc;
-  --editor-bg-secondary: #ffffff;
+  /* Modern color palette - Clean White Design */
+  --editor-bg: #ffffff;
+  --editor-bg-secondary: #f8fafc;
   --editor-text: #1e293b;
   --editor-text-muted: #64748b;
   --editor-border: #e2e8f0;
   --editor-border-hover: #cbd5e1;
-  --editor-primary: #6366f1;
-  --editor-primary-hover: #4f46e5;
-  --editor-primary-light: rgba(99, 102, 241, 0.1);
-  --editor-selection: rgba(99, 102, 241, 0.15);
+  --editor-primary: #2563eb;
+  --editor-primary-hover: #1d4ed8;
+  --editor-primary-light: rgba(37, 99, 235, 0.1);
+  --editor-selection: rgba(37, 99, 235, 0.15);
   --editor-placeholder: #94a3b8;
-  --editor-highlight: #fef3c7;
+  --editor-highlight: #bfdbfe;
   --editor-code-bg: #f1f5f9;
-  --editor-blockquote-border: #6366f1;
-  --editor-dropcursor-color: #6366f1;
+  --editor-blockquote-border: #2563eb;
+  --editor-dropcursor-color: #2563eb;
   --editor-toolbar-bg: #ffffff;
   --editor-toolbar-border: #e2e8f0;
   --editor-menu-bg: #ffffff;
@@ -28,41 +28,15 @@
   --editor-font-mono: 'JetBrains Mono', 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
   
   /* Modern additions */
-  --editor-success: #10b981;
+  --editor-success: #16a34a;
   --editor-warning: #f59e0b;
-  --editor-error: #ef4444;
-  --editor-radius-sm: 6px;
-  --editor-radius-md: 10px;
-  --editor-radius-lg: 14px;
+  --editor-error: #dc2626;
+  --editor-radius-sm: 4px;
+  --editor-radius-md: 8px;
+  --editor-radius-lg: 12px;
   --editor-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --editor-header-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   --editor-sidebar-bg: #ffffff;
   --editor-hover-bg: #f1f5f9;
-}
-
-/* Dark mode */
-[data-theme='dark'] {
-  --editor-bg: #0f172a;
-  --editor-bg-secondary: #1e293b;
-  --editor-text: #f1f5f9;
-  --editor-text-muted: #94a3b8;
-  --editor-border: #334155;
-  --editor-border-hover: #475569;
-  --editor-primary: #818cf8;
-  --editor-primary-hover: #6366f1;
-  --editor-primary-light: rgba(129, 140, 248, 0.15);
-  --editor-selection: rgba(129, 140, 248, 0.25);
-  --editor-placeholder: #64748b;
-  --editor-highlight: rgba(254, 243, 199, 0.2);
-  --editor-code-bg: #1e293b;
-  --editor-blockquote-border: #818cf8;
-  --editor-toolbar-bg: #1e293b;
-  --editor-toolbar-border: #334155;
-  --editor-menu-bg: #1e293b;
-  --editor-menu-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 2px 8px -2px rgba(0, 0, 0, 0.3);
-  --editor-sidebar-bg: #1e293b;
-  --editor-hover-bg: #334155;
-  --editor-header-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
 }
 
 /* ==========================================================================
@@ -85,7 +59,7 @@
 
 .editor-wrapper {
   position: relative;
-  padding: 3rem 4rem;
+  padding: 3rem 3rem;
   min-height: 200px;
   max-width: 850px;
   margin: 0 auto;
@@ -93,9 +67,10 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  background: #ffffff;
   /* Modern scrollbar styling */
   scrollbar-width: thin;
-  scrollbar-color: var(--editor-border) transparent;
+  scrollbar-color: #e2e8f0 transparent;
 }
 
 .editor-wrapper::-webkit-scrollbar {
@@ -227,7 +202,7 @@
 }
 
 .tiptap-editor mark {
-  background: var(--editor-highlight);
+  background: #bfdbfe;
   border-radius: 3px;
   padding: 0.1em 0.25em;
 }

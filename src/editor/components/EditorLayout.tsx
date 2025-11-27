@@ -5,11 +5,10 @@ import { TableOfContents } from './TableOfContents';
 import { CommentsSidebar } from './CommentsSidebar';
 import { usePersistence } from '../hooks/usePersistence';
 import type { EditorLayoutProps, TextEditorRef, Comment, TocHeading, SaveStatus } from '../types/editor';
-import '../styles/toc.css';
-import '../styles/comments.css';
 
 /**
  * Full editor layout with sidebars for TOC and comments
+ * Modern design matching the reference
  */
 export const EditorLayout: React.FC<EditorLayoutProps> = ({
   initialValue,
@@ -193,8 +192,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   }, []);
 
   return (
-    <div className="editor-layout">
-      {/* Table of Contents Sidebar */}
+    <div className="editor-layout-modern">
+      {/* Left Sidebar: Outline */}
       {showToc && (
         <TableOfContents
           headings={headings}
@@ -203,7 +202,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       )}
 
       {/* Main Editor */}
-      <div className="editor-main">
+      <main className="editor-main-modern">
         {/* Save status indicator */}
         {documentId && (
           <div className="editor-status-bar">
@@ -223,9 +222,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           onImageUpload={onImageUpload}
           onMentionSearch={onMentionSearch}
         />
-      </div>
+      </main>
 
-      {/* Comments Sidebar */}
+      {/* Right Sidebar: Comments */}
       {showComments && (
         <CommentsSidebar
           comments={comments}
@@ -240,43 +239,57 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       )}
 
       <style>{`
-        .editor-layout {
+        .editor-layout-modern {
           display: flex;
           height: 100%;
           min-height: 500px;
-          background: var(--editor-bg);
+          background: #ffffff;
         }
 
-        .editor-main {
+        .editor-main-modern {
           flex: 1;
           min-width: 0;
           display: flex;
           flex-direction: column;
-          background: var(--editor-bg);
+          background: #ffffff;
           position: relative;
-        }
-
-        .editor-main::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 120px;
-          background: linear-gradient(180deg, var(--editor-bg-secondary) 0%, transparent 100%);
-          pointer-events: none;
-          z-index: 0;
-          opacity: 0.5;
+          overflow: hidden;
         }
 
         .editor-status-bar {
           padding: 0.625rem 1.25rem;
-          border-bottom: 1px solid var(--editor-border);
+          border-bottom: 1px solid #e2e8f0;
           display: flex;
           justify-content: flex-end;
-          background: var(--editor-bg-secondary);
+          background: #f8fafc;
           position: relative;
           z-index: 1;
+        }
+
+        .save-status {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          font-size: 0.8125rem;
+          color: #64748b;
+          padding: 0.375rem 0.75rem;
+          border-radius: 0.25rem;
+          background: #f1f5f9;
+        }
+
+        .save-status.saving {
+          color: #2563eb;
+          background: #eff6ff;
+        }
+
+        .save-status.saved {
+          color: #16a34a;
+          background: #f0fdf4;
+        }
+
+        .save-status.error {
+          color: #dc2626;
+          background: #fef2f2;
         }
       `}</style>
     </div>

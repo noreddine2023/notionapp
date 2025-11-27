@@ -62,6 +62,7 @@ interface TableOfContentsProps {
 
 /**
  * Modern outline sidebar component matching the reference design
+ * Displays document structure with expandable chapters and parts
  */
 export const TableOfContents: React.FC<TableOfContentsProps> = ({
   headings,
@@ -79,13 +80,13 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
     );
   };
 
-  // Handle part click
-  const handlePartClick = (partId: string) => {
+  // Handle part click - find matching heading by level and index
+  const handlePartClick = (partId: string, partIndex: number) => {
     setActivePartId(partId);
-    // Find corresponding heading and scroll to it
-    const partIndex = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'].indexOf(partId);
-    if (partIndex >= 0 && headings[partIndex]) {
-      onHeadingClick(headings[partIndex]);
+    // Find level 3 headings (Parts) and navigate to the matching one
+    const level3Headings = headings.filter((h) => h.level === 3);
+    if (partIndex < level3Headings.length) {
+      onHeadingClick(level3Headings[partIndex]);
     }
   };
 
@@ -116,11 +117,11 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
 
               {chapter.expanded && chapter.children && chapter.children.length > 0 && (
                 <div className="chapter-parts">
-                  {chapter.children.map((part) => (
+                  {chapter.children.map((part, index) => (
                     <div
                       key={part.id}
                       className={`part-item ${activePartId === part.id ? 'active' : ''}`}
-                      onClick={() => handlePartClick(part.id)}
+                      onClick={() => handlePartClick(part.id, index)}
                     >
                       {part.title}
                     </div>

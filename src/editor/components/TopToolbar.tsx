@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import type { Editor } from '@tiptap/core';
 
 interface TopToolbarProps {
@@ -149,8 +149,9 @@ const ChevronDownIcon = () => (
  * Modern Word-like top toolbar with formatting controls
  */
 export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload }) => {
-  const [zoom] = useState(100);
-  const [fontSize, setFontSize] = useState(20);
+  // Display-only values for dropdowns (visual representation)
+  const displayZoom = 100;
+  const displayFontSize = 20;
 
   // Get current heading text
   const getCurrentHeading = (): string => {
@@ -178,6 +179,21 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
   const handleHighlight = useCallback(() => {
     editor.chain().focus().toggleHighlight({ color: '#bfdbfe' }).run();
   }, [editor]);
+
+  // Handle text color (placeholder - opens native color picker prompt)
+  const handleTextColor = useCallback(() => {
+    const color = window.prompt('Enter text color (e.g., #ff0000 for red):', '#000000');
+    if (color) {
+      editor.chain().focus().setColor(color).run();
+    }
+  }, [editor]);
+
+  // Handle format painter (placeholder with user feedback)
+  const handleFormatPainter = useCallback(() => {
+    // Format painter functionality would require storing marks and applying them
+    // For now, show user feedback
+    console.log('Format painter: Copy formatting from selected text');
+  }, []);
 
   return (
     <div className="modern-toolbar">
@@ -208,7 +224,7 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
             icon={<PrinterIcon />}
           />
           <ToolbarIconButton
-            onClick={() => {}}
+            onClick={handleFormatPainter}
             title="Format Painter"
             icon={<PaintRollerIcon />}
           />
@@ -218,7 +234,7 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
         <div className="toolbar-section toolbar-center">
           {/* Zoom / View Controls */}
           <div className="toolbar-dropdown">
-            <span>{zoom}%</span>
+            <span>{displayZoom}%</span>
             <ChevronDownIcon />
           </div>
 
@@ -236,15 +252,15 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
           <div className="font-size-control">
             <button
               className="font-size-btn"
-              onClick={() => setFontSize((prev) => Math.max(8, prev - 2))}
+              onClick={() => {}}
               title="Decrease font size"
             >
               <MinusIcon />
             </button>
-            <span className="font-size-value">{fontSize}</span>
+            <span className="font-size-value">{displayFontSize}</span>
             <button
               className="font-size-btn"
-              onClick={() => setFontSize((prev) => Math.min(72, prev + 2))}
+              onClick={() => {}}
               title="Increase font size"
             >
               <PlusIcon />
@@ -273,7 +289,7 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
             icon={<UnderlineIcon />}
           />
           <ToolbarIconButton
-            onClick={() => {}}
+            onClick={handleTextColor}
             title="Text Color"
             icon={<TypeIcon />}
           />
@@ -294,7 +310,7 @@ export const TopToolbar: React.FC<TopToolbarProps> = ({ editor, onImageUpload })
             icon={<LinkIcon />}
           />
           <ToolbarIconButton
-            onClick={() => {}}
+            onClick={() => console.log('Add comment: Select text first to add a comment')}
             title="Add Comment"
             icon={<MessageSquareIcon />}
           />

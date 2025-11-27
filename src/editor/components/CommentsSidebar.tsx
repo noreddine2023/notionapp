@@ -32,8 +32,18 @@ const MessageCircleIcon = () => (
   </svg>
 );
 
-// Initial comments data matching the reference
-const INITIAL_COMMENTS: CommentData[] = [
+// Demo comments data matching the reference design (used when no comments prop provided)
+interface DemoComment {
+  id: string;
+  user: string;
+  avatar: string;
+  color: string;
+  time: string;
+  text: string;
+  replies: number;
+}
+
+const DEMO_COMMENTS: DemoComment[] = [
   {
     id: '1',
     user: 'X_AE_A-13',
@@ -63,16 +73,6 @@ const INITIAL_COMMENTS: CommentData[] = [
   },
 ];
 
-interface CommentData {
-  id: string;
-  user: string;
-  avatar: string;
-  color: string;
-  time: string;
-  text: string;
-  replies: number;
-}
-
 interface CommentsSidebarProps {
   comments: Comment[];
   selectedCommentId: string | null;
@@ -96,15 +96,51 @@ const getAvatarColor = (color: string): string => {
   return colorMap[color] || '#6366f1';
 };
 
+// Format date for display
+const formatDate = (date: Date): string => {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
+};
+
+// Get initials from name
+const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
 /**
  * Modern comments sidebar matching the reference design
+ * Supports both real comments (via props) and demo comments for display
  */
 export const CommentsSidebar: React.FC<CommentsSidebarProps> = ({
+  comments,
+  selectedCommentId,
+  onCommentClick,
   onAddComment,
+  onResolveComment,
+  onDeleteComment,
+  onAddReply,
   hasSelection,
 }) => {
-  const [displayComments] = useState<CommentData[]>(INITIAL_COMMENTS);
   const [newCommentText, setNewCommentText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+
+  // Use real comments if available, otherwise show demo comments
+  const hasRealComments = comments.length > 0;
 
   // Handle new comment submission
   const handleAddComment = useCallback(() => {
@@ -113,6 +149,18 @@ export const CommentsSidebar: React.FC<CommentsSidebarProps> = ({
       setNewCommentText('');
     }
   }, [newCommentText, hasSelection, onAddComment]);
+
+  // Handle reply submission
+  const handleAddReply = useCallback(
+    (commentId: string) => {
+      if (replyText.trim()) {
+        onAddReply(commentId, replyText.trim());
+        setReplyText('');
+        setReplyingTo(null);
+      }
+    },
+    [replyText, onAddReply]
+  );
 
   return (
     <aside className="comments-sidebar-modern">
@@ -126,50 +174,156 @@ export const CommentsSidebar: React.FC<CommentsSidebarProps> = ({
 
       {/* Comments list */}
       <div className="comments-list-modern">
-        {displayComments.map((comment) => (
-          <div key={comment.id} className="comment-card-modern">
-            <div className="comment-top">
-              <div className="comment-user-info">
-                <div
-                  className="comment-avatar-modern"
-                  style={{ backgroundColor: getAvatarColor(comment.color) }}
+        {/* Show real comments if available */}
+        {hasRealComments ? (
+          comments.map((comment) => (
+            <div
+              key={comment.id}
+              className={`comment-card-modern ${selectedCommentId === comment.id ? 'selected' : ''} ${comment.resolved ? 'resolved' : ''}`}
+              onClick={() => onCommentClick(comment)}
+            >
+              <div className="comment-top">
+                <div className="comment-user-info">
+                  <div
+                    className="comment-avatar-modern"
+                    style={{ backgroundColor: '#6366f1' }}
+                  >
+                    {getInitials(comment.author.name)}
+                  </div>
+                  <div className="comment-meta">
+                    <div className="comment-username">{comment.author.name}</div>
+                    <div className="comment-time">{formatDate(comment.createdAt)}</div>
+                  </div>
+                </div>
+                <button className="comment-more-btn">
+                  <MoreVerticalIcon />
+                </button>
+              </div>
+
+              <p className="comment-text-modern">{comment.text}</p>
+
+              <div className="comment-footer">
+                <span
+                  className="comment-replies-link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setReplyingTo(replyingTo === comment.id ? null : comment.id);
+                  }}
                 >
-                  {comment.avatar}
-                </div>
-                <div className="comment-meta">
-                  <div className="comment-username">{comment.user}</div>
-                  <div className="comment-time">{comment.time}</div>
+                  {comment.replies.length > 0 ? `${comment.replies.length} replies` : 'Reply'}
+                </span>
+
+                <div className="comment-actions-modern">
+                  <button
+                    className="action-btn delete"
+                    title="Delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteComment(comment.id);
+                    }}
+                  >
+                    <Trash2Icon />
+                  </button>
+                  <button
+                    className="action-btn resolve"
+                    title="Resolve"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onResolveComment(comment.id);
+                    }}
+                  >
+                    <CheckCircleIcon />
+                  </button>
+                  <button className="action-btn react" title="React">
+                    <SmileIcon />
+                  </button>
+                  <button
+                    className="action-btn reply"
+                    title="Reply"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReplyingTo(comment.id);
+                    }}
+                  >
+                    <MessageCircleIcon />
+                  </button>
                 </div>
               </div>
-              <button className="comment-more-btn">
-                <MoreVerticalIcon />
-              </button>
+
+              {/* Reply input */}
+              {replyingTo === comment.id && (
+                <div className="reply-input-wrapper" onClick={(e) => e.stopPropagation()}>
+                  <textarea
+                    className="reply-textarea"
+                    placeholder="Write a reply..."
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    autoFocus
+                    rows={2}
+                  />
+                  <div className="reply-buttons">
+                    <button className="reply-cancel" onClick={() => setReplyingTo(null)}>
+                      Cancel
+                    </button>
+                    <button
+                      className="reply-submit"
+                      onClick={() => handleAddReply(comment.id)}
+                      disabled={!replyText.trim()}
+                    >
+                      Reply
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-
-            <p className="comment-text-modern">{comment.text}</p>
-
-            <div className="comment-footer">
-              <span className="comment-replies-link">
-                {comment.replies > 0 ? `${comment.replies} replies` : 'Reply'}
-              </span>
-
-              <div className="comment-actions-modern">
-                <button className="action-btn delete" title="Delete">
-                  <Trash2Icon />
-                </button>
-                <button className="action-btn resolve" title="Resolve">
-                  <CheckCircleIcon />
-                </button>
-                <button className="action-btn react" title="React">
-                  <SmileIcon />
-                </button>
-                <button className="action-btn reply" title="Reply">
-                  <MessageCircleIcon />
+          ))
+        ) : (
+          /* Show demo comments when no real comments exist */
+          DEMO_COMMENTS.map((comment) => (
+            <div key={comment.id} className="comment-card-modern">
+              <div className="comment-top">
+                <div className="comment-user-info">
+                  <div
+                    className="comment-avatar-modern"
+                    style={{ backgroundColor: getAvatarColor(comment.color) }}
+                  >
+                    {comment.avatar}
+                  </div>
+                  <div className="comment-meta">
+                    <div className="comment-username">{comment.user}</div>
+                    <div className="comment-time">{comment.time}</div>
+                  </div>
+                </div>
+                <button className="comment-more-btn">
+                  <MoreVerticalIcon />
                 </button>
               </div>
+
+              <p className="comment-text-modern">{comment.text}</p>
+
+              <div className="comment-footer">
+                <span className="comment-replies-link">
+                  {comment.replies > 0 ? `${comment.replies} replies` : 'Reply'}
+                </span>
+
+                <div className="comment-actions-modern">
+                  <button className="action-btn delete" title="Delete">
+                    <Trash2Icon />
+                  </button>
+                  <button className="action-btn resolve" title="Resolve">
+                    <CheckCircleIcon />
+                  </button>
+                  <button className="action-btn react" title="React">
+                    <SmileIcon />
+                  </button>
+                  <button className="action-btn reply" title="Reply">
+                    <MessageCircleIcon />
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Add comment form */}
@@ -257,11 +411,21 @@ export const CommentsSidebar: React.FC<CommentsSidebarProps> = ({
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
           border: 1px solid #f1f5f9;
           transition: all 0.2s;
+          cursor: pointer;
         }
 
         .comment-card-modern:hover {
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
           border-color: #e2e8f0;
+        }
+
+        .comment-card-modern.selected {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .comment-card-modern.resolved {
+          opacity: 0.6;
         }
 
         .comment-top {
@@ -387,6 +551,70 @@ export const CommentsSidebar: React.FC<CommentsSidebarProps> = ({
 
         .action-btn.reply:hover {
           color: #2563eb;
+        }
+
+        .reply-input-wrapper {
+          margin-top: 0.75rem;
+          padding-top: 0.75rem;
+          border-top: 1px solid #f1f5f9;
+        }
+
+        .reply-textarea {
+          width: 100%;
+          padding: 0.5rem;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.375rem;
+          font-size: 0.8125rem;
+          font-family: inherit;
+          resize: none;
+          color: #1e293b;
+        }
+
+        .reply-textarea:focus {
+          outline: none;
+          border-color: #2563eb;
+        }
+
+        .reply-buttons {
+          display: flex;
+          gap: 0.5rem;
+          justify-content: flex-end;
+          margin-top: 0.5rem;
+        }
+
+        .reply-cancel, .reply-submit {
+          padding: 0.375rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 500;
+          border-radius: 0.25rem;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+
+        .reply-cancel {
+          background: transparent;
+          border: 1px solid #e2e8f0;
+          color: #64748b;
+        }
+
+        .reply-cancel:hover {
+          background: #f1f5f9;
+        }
+
+        .reply-submit {
+          background: #2563eb;
+          border: none;
+          color: #ffffff;
+        }
+
+        .reply-submit:hover:not(:disabled) {
+          background: #1d4ed8;
+        }
+
+        .reply-submit:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .add-comment-form-modern {

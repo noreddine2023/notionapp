@@ -144,7 +144,9 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>(
         style={{ 
           minHeight,
           maxHeight,
-          overflow: maxHeight ? 'auto' : undefined,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* Top Toolbar */}
@@ -156,7 +158,7 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>(
         )}
 
         {/* Editor Content */}
-        <div className="editor-wrapper" style={{ minHeight }}>
+        <div className="editor-wrapper" style={{ minHeight, flex: 1 }}>
           {/* Main Editor */}
           <EditorContent editor={editor} />
 

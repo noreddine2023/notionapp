@@ -6,11 +6,17 @@ import { generateBlockId } from './idGenerator';
  */
 export function createBlock(type: BlockType = 'text', content: string = ''): Block {
   const now = new Date();
+  const props: Block['props'] = type === 'todo' 
+    ? { checked: false } 
+    : type === 'image' 
+    ? { alignment: 'center' } 
+    : undefined;
+    
   return {
     id: generateBlockId(),
     type,
     content,
-    props: type === 'todo' ? { checked: false } : undefined,
+    props,
     createdAt: now,
     updatedAt: now,
   };
@@ -37,6 +43,8 @@ export function getBlockPlaceholder(type: BlockType): string {
       return 'Quote';
     case 'code':
       return 'Code';
+    case 'image':
+      return 'Click to upload an image';
     case 'text':
     default:
       return "Type '/' for commands...";

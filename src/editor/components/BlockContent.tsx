@@ -8,12 +8,14 @@ import {
   QuoteBlock,
   DividerBlock,
   CodeBlock,
+  ImageBlock,
 } from './blocks';
 
 interface BlockContentProps {
   block: Block;
   isActive: boolean;
   onUpdate: (content: string) => void;
+  onUpdateWithProps?: (content: string, props?: Block['props']) => void;
   onToggleTodo?: () => void;
   onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   onFocus: () => void;
@@ -25,6 +27,7 @@ export const BlockContent: React.FC<BlockContentProps> = ({
   block,
   isActive,
   onUpdate,
+  onUpdateWithProps,
   onToggleTodo,
   onKeyDown,
   onFocus,
@@ -97,6 +100,18 @@ export const BlockContent: React.FC<BlockContentProps> = ({
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           registerRef={registerRef}
+        />
+      );
+    case 'image':
+      return (
+        <ImageBlock
+          block={block}
+          isActive={isActive}
+          onUpdate={onUpdateWithProps || ((content, _props) => {
+            onUpdate(content);
+            // Props update handled separately if no onUpdateWithProps provided
+          })}
+          onFocus={onFocus}
         />
       );
     case 'text':

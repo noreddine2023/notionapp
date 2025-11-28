@@ -1,144 +1,86 @@
-import React, { useCallback } from 'react';
-import { BlockEditor } from './editor/components/BlockEditor';
+import React, { useCallback, useEffect } from 'react';
+import { FileText, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { NotesSidebar } from './editor/components/NotesSidebar';
+import { NoteEditor } from './editor/components/NoteEditor';
+import { useNotesStore } from './editor/store/notesStore';
 import type { Block } from './editor/types/blocks';
 
-// Sample content for the new block-based editor
-const sampleBlocks: Block[] = [
-  {
-    id: '1',
-    type: 'h1',
-    content: 'Legend Of X',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    type: 'h2',
-    content: 'Chapter 1: Awakening',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '3',
-    type: 'text',
-    content: 'Lorem ipsum dolor sit amet consectetur. In lorem varius non arcu eget. Odio odio placerat sit enim pretium sed risus vitae. Velit egestas montes convallis cras venenatis suspendisse consequat sit.',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '4',
-    type: 'text',
-    content: 'Facilisis fames commodo enim vivamus cursus eget eu. Tristique platea duis et tristique ultrices dui diam nunc. Mauris elementum sem lacus viverra suspendisse.',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '5',
-    type: 'h3',
-    content: 'Part 1: Androids',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '6',
-    type: 'text',
-    content: 'Lorem ipsum dolor sit amet consectetur. At feugiat ac placerat habitant nec sed ultrices. Rutrum massa ipsum bibendum ac at feugiat felis ante.',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '7',
-    type: 'h3',
-    content: 'Part 2: Electric Sheeps',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '8',
-    type: 'bullet',
-    content: 'First item in the list',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '9',
-    type: 'bullet',
-    content: 'Second item in the list',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '10',
-    type: 'todo',
-    content: 'Complete the editor implementation',
-    props: { checked: true },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '11',
-    type: 'todo',
-    content: 'Add more features',
-    props: { checked: false },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '12',
-    type: 'quote',
-    content: 'The best way to predict the future is to invent it.',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '13',
-    type: 'code',
-    content: 'const hello = "world";',
-    props: { language: 'javascript' },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '14',
-    type: 'divider',
-    content: '',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '15',
-    type: 'text',
-    content: "Try typing '/' to see available commands, or drag blocks to reorder them!",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
-
 /**
- * Main application component - Modern Document Editor
+ * Main application component - Modern Note Taking App
  */
 const App: React.FC = () => {
+  const { 
+    activeNoteId, 
+    notes, 
+    setActiveNote,
+  } = useNotesStore();
+
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+
+  // Set first note as active on initial load if none selected
+  useEffect(() => {
+    if (!activeNoteId && notes.length > 0) {
+      setActiveNote(notes[0].id);
+    }
+  }, []);
+
   // Handle content change
   const handleChange = useCallback((blocks: Block[]) => {
-    console.log('Content updated:', blocks);
+    console.log('Content updated:', blocks.length, 'blocks');
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-white text-slate-800 font-sans">
-      {/* Simple header */}
-      <header className="border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-800">Notion-Style Editor</h1>
-        <span className="text-sm text-gray-500">Block-based editing</span>
+    <div className="h-screen flex flex-col bg-gray-50 text-slate-800 font-sans">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between z-10">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-md hover:bg-gray-100 text-gray-600 transition-colors"
+            title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+          >
+            {sidebarOpen ? (
+              <PanelLeftClose className="w-5 h-5" />
+            ) : (
+              <PanelLeft className="w-5 h-5" />
+            )}
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-blue-100 rounded-lg">
+              <FileText className="w-5 h-5 text-blue-600" />
+            </div>
+            <h1 className="text-lg font-semibold text-gray-800">Notes</h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">
+            {notes.length} note{notes.length !== 1 ? 's' : ''}
+          </span>
+        </div>
       </header>
 
-      {/* Editor */}
-      <main className="flex-1 overflow-hidden">
-        <BlockEditor
-          initialContent={sampleBlocks}
-          onChange={handleChange}
-          autoFocus
-        />
-      </main>
+      {/* Main content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            sidebarOpen ? 'w-80' : 'w-0'
+          } overflow-hidden flex-shrink-0`}
+        >
+          <div className="w-80 h-full">
+            <NotesSidebar />
+          </div>
+        </div>
+
+        {/* Editor */}
+        <main className="flex-1 overflow-hidden">
+          <NoteEditor
+            noteId={activeNoteId}
+            onChange={handleChange}
+            autoFocus
+          />
+        </main>
+      </div>
     </div>
   );
 };

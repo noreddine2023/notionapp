@@ -2,7 +2,7 @@
  * Block-based editor types
  */
 
-export type BlockType = 'text' | 'h1' | 'h2' | 'h3' | 'bullet' | 'numbered' | 'todo' | 'quote' | 'divider' | 'code';
+export type BlockType = 'text' | 'h1' | 'h2' | 'h3' | 'bullet' | 'numbered' | 'todo' | 'quote' | 'divider' | 'code' | 'image';
 
 export interface Block {
   id: string;
@@ -13,6 +13,11 @@ export interface Block {
     language?: string;      // for code blocks
     level?: number;         // for nested lists
     placeholder?: string;   // custom placeholder text
+    src?: string;           // for image blocks
+    alt?: string;           // for image blocks
+    caption?: string;       // for image blocks
+    width?: number;         // for image blocks
+    alignment?: 'left' | 'center' | 'right'; // for image blocks
   };
   createdAt: Date;
   updatedAt: Date;

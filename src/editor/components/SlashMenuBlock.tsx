@@ -10,6 +10,7 @@ import {
   Quote,
   Minus,
   Code,
+  Image,
 } from 'lucide-react';
 import type { BlockType, SlashMenuItem } from '../types/blocks';
 
@@ -31,6 +32,7 @@ const SLASH_MENU_ITEMS: SlashMenuItem[] = [
   { type: 'quote', label: 'Quote', description: 'Block quote', keywords: ['quote', 'blockquote'] },
   { type: 'divider', label: 'Divider', description: 'Horizontal divider', keywords: ['divider', 'hr', 'line', 'separator'] },
   { type: 'code', label: 'Code', description: 'Code block', keywords: ['code', 'codeblock', 'pre'] },
+  { type: 'image', label: 'Image', description: 'Upload or embed an image', keywords: ['image', 'img', 'photo', 'picture'] },
 ];
 
 const IconMap: Record<BlockType, React.FC<{ className?: string }>> = {
@@ -44,6 +46,7 @@ const IconMap: Record<BlockType, React.FC<{ className?: string }>> = {
   quote: Quote,
   divider: Minus,
   code: Code,
+  image: Image,
 };
 
 export const SlashMenu: React.FC<SlashMenuProps> = ({

@@ -5,3 +5,4 @@ export { TodoBlock } from './TodoBlock';
 export { QuoteBlock } from './QuoteBlock';
 export { DividerBlock } from './DividerBlock';
 export { CodeBlock } from './CodeBlock';
+export { ImageBlock } from './ImageBlock';

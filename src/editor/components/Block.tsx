@@ -41,6 +41,11 @@ export const Block: React.FC<BlockProps> = ({
     updateBlock(block.id, { content });
   }, [block.id, updateBlock]);
 
+  // Handle content and props update (for image blocks etc.)
+  const handleUpdateWithProps = useCallback((content: string, props?: typeof block.props) => {
+    updateBlock(block.id, { content, props });
+  }, [block.id, updateBlock]);
+
   // Handle todo toggle
   const handleToggleTodo = useCallback(() => {
     updateBlock(block.id, {
@@ -254,6 +259,7 @@ export const Block: React.FC<BlockProps> = ({
         block={block}
         isActive={isActive}
         onUpdate={handleUpdate}
+        onUpdateWithProps={handleUpdateWithProps}
         onToggleTodo={handleToggleTodo}
         onKeyDown={handleKeyDown}
         onFocus={onFocus}

@@ -108,6 +108,23 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
   // Get block IDs for sortable context
   const blockIds = useMemo(() => blocks.map((b) => b.id), [blocks]);
 
+  // Calculate list indices for numbered lists
+  const getListIndex = useCallback((blockIndex: number): number => {
+    const block = blocks[blockIndex];
+    if (block.type !== 'numbered') return 1;
+    
+    let count = 1;
+    // Count consecutive numbered blocks before this one
+    for (let i = blockIndex - 1; i >= 0; i--) {
+      if (blocks[i].type === 'numbered') {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }, [blocks]);
+
   return (
     <div className="block-editor flex flex-col h-full bg-white">
       {/* Editor content area */}
@@ -119,12 +136,13 @@ export const BlockEditor: React.FC<BlockEditorProps> = ({
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={blockIds} strategy={verticalListSortingStrategy}>
-              {blocks.map((block) => (
+              {blocks.map((block, index) => (
                 <SortableBlock
                   key={block.id}
                   block={block}
                   isActive={activeBlockId === block.id}
                   onFocus={() => handleBlockFocus(block.id)}
+                  listIndex={block.type === 'numbered' ? getListIndex(index) : undefined}
                 />
               ))}
             </SortableContext>

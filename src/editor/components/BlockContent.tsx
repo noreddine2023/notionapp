@@ -18,6 +18,7 @@ interface BlockContentProps {
   onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   onFocus: () => void;
   registerRef: (el: HTMLDivElement | null) => void;
+  listIndex?: number; // For numbered lists
 }
 
 export const BlockContent: React.FC<BlockContentProps> = ({
@@ -28,6 +29,7 @@ export const BlockContent: React.FC<BlockContentProps> = ({
   onKeyDown,
   onFocus,
   registerRef,
+  listIndex,
 }) => {
   switch (block.type) {
     case 'h1':
@@ -53,6 +55,7 @@ export const BlockContent: React.FC<BlockContentProps> = ({
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           registerRef={registerRef}
+          listIndex={listIndex}
         />
       );
     case 'todo':

@@ -8,12 +8,14 @@ interface SortableBlockProps {
   block: BlockType;
   isActive: boolean;
   onFocus: () => void;
+  listIndex?: number; // For numbered lists
 }
 
 export const SortableBlock: React.FC<SortableBlockProps> = ({
   block,
   isActive,
   onFocus,
+  listIndex,
 }) => {
   const {
     attributes,
@@ -37,6 +39,7 @@ export const SortableBlock: React.FC<SortableBlockProps> = ({
         isDragging={isDragging}
         onFocus={onFocus}
         dragHandleProps={listeners}
+        listIndex={listIndex}
       />
     </div>
   );

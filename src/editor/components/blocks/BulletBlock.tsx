@@ -9,6 +9,7 @@ interface BulletBlockProps {
   onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   onFocus: () => void;
   registerRef: (el: HTMLDivElement | null) => void;
+  listIndex?: number; // For numbered lists
 }
 
 export const BulletBlock: React.FC<BulletBlockProps> = ({
@@ -18,6 +19,7 @@ export const BulletBlock: React.FC<BulletBlockProps> = ({
   onKeyDown,
   onFocus,
   registerRef,
+  listIndex = 1,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -57,7 +59,7 @@ export const BulletBlock: React.FC<BulletBlockProps> = ({
   return (
     <div className="flex items-start gap-2">
       <span className="select-none text-gray-400 leading-relaxed min-w-[1.5em] text-center">
-        {isBullet ? '•' : '1.'}
+        {isBullet ? '•' : `${listIndex}.`}
       </span>
       <div
         ref={handleRef}

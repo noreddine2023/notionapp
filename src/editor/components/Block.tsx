@@ -10,6 +10,7 @@ interface BlockProps {
   isDragging?: boolean;
   onFocus: () => void;
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
+  listIndex?: number; // For numbered lists
 }
 
 export const Block: React.FC<BlockProps> = ({
@@ -18,6 +19,7 @@ export const Block: React.FC<BlockProps> = ({
   isDragging = false,
   onFocus,
   dragHandleProps,
+  listIndex,
 }) => {
   const blockRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -256,6 +258,7 @@ export const Block: React.FC<BlockProps> = ({
         onKeyDown={handleKeyDown}
         onFocus={onFocus}
         registerRef={registerRef}
+        listIndex={listIndex}
       />
     </div>
   );

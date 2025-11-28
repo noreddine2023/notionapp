@@ -1,112 +1,144 @@
 import React, { useCallback } from 'react';
-import type { JSONContent } from '@tiptap/core';
-import { EditorLayout } from './editor/components/EditorLayout';
-import { sampleDocument } from './editor/types/content';
-import type { MentionItem } from './editor/types/editor';
+import { BlockEditor } from './editor/components/BlockEditor';
+import type { Block } from './editor/types/blocks';
+
+// Sample content for the new block-based editor
+const sampleBlocks: Block[] = [
+  {
+    id: '1',
+    type: 'h1',
+    content: 'Legend Of X',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '2',
+    type: 'h2',
+    content: 'Chapter 1: Awakening',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '3',
+    type: 'text',
+    content: 'Lorem ipsum dolor sit amet consectetur. In lorem varius non arcu eget. Odio odio placerat sit enim pretium sed risus vitae. Velit egestas montes convallis cras venenatis suspendisse consequat sit.',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '4',
+    type: 'text',
+    content: 'Facilisis fames commodo enim vivamus cursus eget eu. Tristique platea duis et tristique ultrices dui diam nunc. Mauris elementum sem lacus viverra suspendisse.',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '5',
+    type: 'h3',
+    content: 'Part 1: Androids',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '6',
+    type: 'text',
+    content: 'Lorem ipsum dolor sit amet consectetur. At feugiat ac placerat habitant nec sed ultrices. Rutrum massa ipsum bibendum ac at feugiat felis ante.',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '7',
+    type: 'h3',
+    content: 'Part 2: Electric Sheeps',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '8',
+    type: 'bullet',
+    content: 'First item in the list',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '9',
+    type: 'bullet',
+    content: 'Second item in the list',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '10',
+    type: 'todo',
+    content: 'Complete the editor implementation',
+    props: { checked: true },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '11',
+    type: 'todo',
+    content: 'Add more features',
+    props: { checked: false },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '12',
+    type: 'quote',
+    content: 'The best way to predict the future is to invent it.',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '13',
+    type: 'code',
+    content: 'const hello = "world";',
+    props: { language: 'javascript' },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '14',
+    type: 'divider',
+    content: '',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '15',
+    type: 'text',
+    content: "Try typing '/' to see available commands, or drag blocks to reorder them!",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
 
 /**
  * Main application component - Modern Document Editor
  */
 const App: React.FC = () => {
-  // Handle content change (just log, no state update to prevent re-render loops)
-  const handleChange = useCallback((newContent: JSONContent) => {
-    console.log('Content updated:', newContent);
-  }, []);
-
-  // Handle image upload
-  const handleImageUpload = useCallback(async (file: File): Promise<string> => {
-    // In a real app, upload to server
-    // For demo, create a local blob URL
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        resolve(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    });
-  }, []);
-
-  // Handle mention search
-  const handleMentionSearch = useCallback(async (query: string): Promise<MentionItem[]> => {
-    // Demo users
-    const users: MentionItem[] = [
-      { id: '1', label: 'X_AE_A-13', email: 'x@example.com' },
-      { id: '2', label: 'Saylor Twift', email: 'saylor@example.com' },
-      { id: '3', label: 'Oarack Babama', email: 'oarack@example.com' },
-      { id: '4', label: 'Alice Johnson', email: 'alice@example.com' },
-      { id: '5', label: 'Charlie Brown', email: 'charlie@example.com' },
-    ];
-
-    return users.filter((user) =>
-      user.label.toLowerCase().includes(query.toLowerCase())
-    );
+  // Handle content change
+  const handleChange = useCallback((blocks: Block[]) => {
+    console.log('Content updated:', blocks);
   }, []);
 
   return (
-    <div className="app">
-      {/* Editor - Full Screen Layout */}
-      <EditorLayout
-        initialValue={sampleDocument}
-        onChange={handleChange}
-        onImageUpload={handleImageUpload}
-        onMentionSearch={handleMentionSearch}
-        showToc={true}
-        showComments={true}
-        placeholder="Start writing or type '/' for commands..."
-        autoFocus
-      />
+    <div className="h-screen flex flex-col bg-white text-slate-800 font-sans">
+      {/* Simple header */}
+      <header className="border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-gray-800">Notion-Style Editor</h1>
+        <span className="text-sm text-gray-500">Block-based editing</span>
+      </header>
 
-      <style>{`
-        .app {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          background: #ffffff;
-          color: #1e293b;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
-
-        /* Global styles */
-        * {
-          box-sizing: border-box;
-        }
-
-        body {
-          margin: 0;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-
-        /* Custom scrollbar - minimal style */
-        ::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
-        }
-
-        /* Hide scrollbar for no-scrollbar class */
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+      {/* Editor */}
+      <main className="flex-1 overflow-hidden">
+        <BlockEditor
+          initialContent={sampleBlocks}
+          onChange={handleChange}
+          autoFocus
+        />
+      </main>
     </div>
   );
 };

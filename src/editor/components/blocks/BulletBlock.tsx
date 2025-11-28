@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, KeyboardEvent, FormEvent } from 'react';
 import type { Block } from '../../types/blocks';
 import { getBlockPlaceholder } from '../../utils/blockUtils';
+import { sanitizeHtml } from '../../utils/sanitize';
 
 interface BulletBlockProps {
   block: Block;
@@ -22,6 +23,7 @@ export const BulletBlock: React.FC<BulletBlockProps> = ({
   listIndex = 1,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const isInternalUpdate = useRef(false);
 
   // Focus the element when isActive changes
   useEffect(() => {
@@ -37,16 +39,21 @@ export const BulletBlock: React.FC<BulletBlockProps> = ({
     }
   }, [isActive]);
 
-  // Sync content with block.content
+  // Sync content with block.content - use innerHTML to preserve formatting
   useEffect(() => {
-    if (contentRef.current && contentRef.current.textContent !== block.content) {
-      contentRef.current.textContent = block.content;
+    if (contentRef.current && !isInternalUpdate.current) {
+      const sanitizedContent = sanitizeHtml(block.content);
+      if (contentRef.current.innerHTML !== sanitizedContent) {
+        contentRef.current.innerHTML = sanitizedContent;
+      }
     }
+    isInternalUpdate.current = false;
   }, [block.content]);
 
   const handleInput = (e: FormEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
-    onUpdate(target.textContent || '');
+    isInternalUpdate.current = true;
+    onUpdate(target.innerHTML || '');
   };
 
   const handleRef = (el: HTMLDivElement | null) => {
@@ -58,7 +65,7 @@ export const BulletBlock: React.FC<BulletBlockProps> = ({
 
   return (
     <div className="flex items-start gap-2">
-      <span className="select-none text-gray-400 leading-relaxed min-w-[1.5em] text-center">
+      <span className="select-none text-gray-400 leading-relaxed min-w-[1.5em] text-center flex-shrink-0">
         {isBullet ? '•' : `${listIndex}.`}
       </span>
       <div
@@ -69,7 +76,14 @@ export const BulletBlock: React.FC<BulletBlockProps> = ({
         onKeyDown={onKeyDown}
         onFocus={onFocus}
         data-placeholder={getBlockPlaceholder(block.type)}
-        className="outline-none min-h-[1.5em] flex-1 text-base leading-relaxed"
+        className="outline-none min-h-[1.5em] flex-1 text-base leading-relaxed break-words"
+        style={{
+          maxWidth: '100%',
+          overflowWrap: 'break-word',
+          wordWrap: 'break-word',
+          wordBreak: 'break-word',
+          whiteSpace: 'pre-wrap',
+        }}
       />
     </div>
   );

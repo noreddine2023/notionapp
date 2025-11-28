@@ -21,6 +21,7 @@ import { SlashMenu } from './SlashMenuBlock';
 import { EditorToolbar } from './EditorToolbar';
 import type { Block, BlockType } from '../types/blocks';
 import { createBlock } from '../utils/blockUtils';
+import { sanitizeUrl } from '../utils/sanitize';
 
 interface NoteEditorProps {
   noteId: string | null;
@@ -167,8 +168,91 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
 
   // Handle toolbar format
   const handleFormatText = useCallback((format: string, value?: string) => {
-    // For block-based editor, these actions create/convert blocks
+    // For inline text formatting, use document.execCommand
+    // This works on the currently selected text in any contentEditable element
+    
     switch (format) {
+      // Inline text formatting
+      case 'bold':
+        document.execCommand('bold', false);
+        break;
+      case 'italic':
+        document.execCommand('italic', false);
+        break;
+      case 'underline':
+        document.execCommand('underline', false);
+        break;
+      case 'strikethrough':
+        document.execCommand('strikeThrough', false);
+        break;
+      case 'textColor':
+        if (value) {
+          document.execCommand('foreColor', false, value);
+        }
+        break;
+      case 'highlight':
+        if (value) {
+          document.execCommand('hiliteColor', false, value);
+        }
+        break;
+      case 'underlineColor':
+        // For colored underlines, we'll use a span with custom styles
+        if (value) {
+          const [color, style] = value.split('|');
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            const span = document.createElement('span');
+            span.style.textDecoration = 'underline';
+            span.style.textDecorationColor = color;
+            span.style.textDecorationStyle = style as 'solid' | 'wavy' | 'dotted';
+            range.surroundContents(span);
+          }
+        }
+        break;
+      case 'fontSize':
+        // Font size needs to be set via a span with inline style
+        if (value) {
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            const span = document.createElement('span');
+            span.style.fontSize = value;
+            range.surroundContents(span);
+          }
+        }
+        break;
+      case 'fontFamily':
+        if (value) {
+          document.execCommand('fontName', false, value);
+        }
+        break;
+      case 'align':
+        if (value) {
+          document.execCommand(`justify${value.charAt(0).toUpperCase() + value.slice(1)}`, false);
+        }
+        break;
+      case 'link':
+        {
+          const url = window.prompt('Enter URL:');
+          if (url) {
+            const sanitizedUrl = sanitizeUrl(url);
+            if (sanitizedUrl) {
+              document.execCommand('createLink', false, sanitizedUrl);
+            } else {
+              alert('Invalid URL. Please enter a valid http, https, mailto, or relative URL.');
+            }
+          }
+        }
+        break;
+      case 'undo':
+        document.execCommand('undo', false);
+        break;
+      case 'redo':
+        document.execCommand('redo', false);
+        break;
+        
+      // Block-level formatting (convert block types)
       case 'heading':
         if (activeBlockId) {
           const level = value as '1' | '2' | '3';
@@ -204,8 +288,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         addBlock(activeBlockId, 'divider');
         break;
       default:
-        // Other formatting would need rich text support in blocks
-        console.log('Format:', format, value);
+        console.log('Unhandled format:', format, value);
     }
   }, [activeBlockId, convertBlockType, addBlock]);
 
@@ -318,10 +401,32 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
             0 4px 6px rgba(0, 0, 0, 0.08),
             0 10px 20px rgba(0, 0, 0, 0.04);
           border: 1px solid rgba(0, 0, 0, 0.05);
+          overflow: hidden;
         }
 
         .paper-content {
           min-height: calc(800px - 6rem);
+          max-width: 100%;
+          overflow-wrap: break-word;
+          word-wrap: break-word;
+          word-break: break-word;
+          overflow-x: hidden;
+        }
+
+        /* Ensure all content stays within container */
+        .paper-content * {
+          max-width: 100%;
+          overflow-wrap: break-word;
+          word-wrap: break-word;
+        }
+
+        /* Fix contentEditable text overflow */
+        .paper-content [contenteditable] {
+          max-width: 100%;
+          overflow-wrap: break-word;
+          word-wrap: break-word;
+          word-break: break-word;
+          white-space: pre-wrap;
         }
 
         /* Paper texture (subtle) */

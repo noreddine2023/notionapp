@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, KeyboardEvent, FormEvent } from 'react';
 import type { Block, BlockType } from '../../types/blocks';
 import { getBlockPlaceholder } from '../../utils/blockUtils';
+import { sanitizeHtml } from '../../utils/sanitize';
 
 interface HeadingBlockProps {
   block: Block;
@@ -20,6 +21,7 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   registerRef,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const isInternalUpdate = useRef(false);
 
   // Focus the element when isActive changes
   useEffect(() => {
@@ -35,16 +37,21 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
     }
   }, [isActive]);
 
-  // Sync content with block.content
+  // Sync content with block.content - use innerHTML to preserve formatting
   useEffect(() => {
-    if (contentRef.current && contentRef.current.textContent !== block.content) {
-      contentRef.current.textContent = block.content;
+    if (contentRef.current && !isInternalUpdate.current) {
+      const sanitizedContent = sanitizeHtml(block.content);
+      if (contentRef.current.innerHTML !== sanitizedContent) {
+        contentRef.current.innerHTML = sanitizedContent;
+      }
     }
+    isInternalUpdate.current = false;
   }, [block.content]);
 
   const handleInput = (e: FormEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
-    onUpdate(target.textContent || '');
+    isInternalUpdate.current = true;
+    onUpdate(target.innerHTML || '');
   };
 
   const handleRef = (el: HTMLDivElement | null) => {
@@ -74,7 +81,14 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       data-placeholder={getBlockPlaceholder(block.type)}
-      className={`outline-none min-h-[1.5em] leading-tight ${getHeadingClass(block.type)}`}
+      className={`outline-none min-h-[1.5em] leading-tight break-words ${getHeadingClass(block.type)}`}
+      style={{
+        maxWidth: '100%',
+        overflowWrap: 'break-word',
+        wordWrap: 'break-word',
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap',
+      }}
     />
   );
 };

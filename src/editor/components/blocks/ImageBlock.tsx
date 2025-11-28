@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, X, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import type { Block } from '../../types/blocks';
 
@@ -9,6 +9,10 @@ interface ImageBlockProps {
   onFocus: () => void;
 }
 
+// Minimum and maximum dimensions for resizing
+const MIN_WIDTH = 100;
+const MAX_WIDTH = 800;
+
 export const ImageBlock: React.FC<ImageBlockProps> = ({
   block,
   isActive,
@@ -17,7 +21,12 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleFileSelect = useCallback(
     async (file: File) => {
@@ -102,10 +111,72 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
       src: undefined,
       alt: undefined,
       caption: undefined,
+      width: undefined,
     });
   }, [block.props, onUpdate]);
 
+  // Handle resize start
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent, _corner: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (imageRef.current) {
+        const rect = imageRef.current.getBoundingClientRect();
+        setResizeStart({
+          x: e.clientX,
+          y: e.clientY,
+          width: rect.width,
+          height: rect.height,
+        });
+        setIsResizing(true);
+      }
+    },
+    []
+  );
+
+  // Handle resize move
+  useEffect(() => {
+    if (!isResizing || !resizeStart) return;
+
+    let lastWidth = resizeStart.width;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - resizeStart.x;
+      
+      let newWidth = resizeStart.width + deltaX;
+      
+      // Constrain width
+      newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
+      
+      // Only update if width changed significantly (optimization)
+      if (Math.abs(newWidth - lastWidth) >= 2) {
+        lastWidth = newWidth;
+        // Update the image dimensions in block props
+        // Height is auto via CSS when maintainAspectRatio is true
+        onUpdate(block.content, {
+          ...block.props,
+          width: Math.round(newWidth),
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      setResizeStart(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, resizeStart, maintainAspectRatio, block.content, block.props, onUpdate]);
+
   const alignment = block.props?.alignment || 'center';
+  const imageWidth = block.props?.width;
 
   // If no image uploaded yet, show upload area
   if (!block.props?.src) {
@@ -160,9 +231,10 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
     );
   }
 
-  // Show uploaded image
+  // Show uploaded image with resize handles
   return (
     <div
+      ref={containerRef}
       onClick={onFocus}
       className={`relative group ${
         alignment === 'left'
@@ -172,16 +244,64 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
           : 'text-center'
       }`}
     >
-      {/* Image */}
-      <div className="relative inline-block max-w-full">
+      {/* Image container with resize handles */}
+      <div 
+        className="relative inline-block"
+        style={{ maxWidth: '100%' }}
+      >
         <img
+          ref={imageRef}
           src={block.props.src}
           alt={block.props.alt || 'Image'}
-          className={`max-w-full h-auto rounded-lg ${
+          className={`h-auto rounded-lg ${
             isActive ? 'ring-2 ring-blue-500 ring-offset-2' : ''
-          }`}
-          style={{ maxHeight: '400px' }}
+          } ${isResizing ? 'pointer-events-none select-none' : ''}`}
+          style={{ 
+            width: imageWidth ? `${imageWidth}px` : 'auto',
+            maxWidth: '100%',
+            maxHeight: '600px',
+          }}
+          draggable={false}
         />
+
+        {/* Resize handles - shown when active */}
+        {isActive && (
+          <>
+            {/* Corner resize handles */}
+            <div
+              className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-se-resize shadow-md hover:bg-blue-600 transition-colors z-10"
+              onMouseDown={(e) => handleResizeStart(e, 'se')}
+              title="Drag to resize"
+            />
+            <div
+              className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-sw-resize shadow-md hover:bg-blue-600 transition-colors z-10"
+              onMouseDown={(e) => handleResizeStart(e, 'sw')}
+              title="Drag to resize"
+            />
+            <div
+              className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-ne-resize shadow-md hover:bg-blue-600 transition-colors z-10"
+              onMouseDown={(e) => handleResizeStart(e, 'ne')}
+              title="Drag to resize"
+            />
+            <div
+              className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 border-2 border-white rounded-sm cursor-nw-resize shadow-md hover:bg-blue-600 transition-colors z-10"
+              onMouseDown={(e) => handleResizeStart(e, 'nw')}
+              title="Drag to resize"
+            />
+
+            {/* Edge resize handles */}
+            <div
+              className="absolute top-1/2 -right-2 w-3 h-8 -translate-y-1/2 bg-blue-500 border-2 border-white rounded-sm cursor-e-resize shadow-md hover:bg-blue-600 transition-colors z-10"
+              onMouseDown={(e) => handleResizeStart(e, 'e')}
+              title="Drag to resize"
+            />
+            <div
+              className="absolute top-1/2 -left-2 w-3 h-8 -translate-y-1/2 bg-blue-500 border-2 border-white rounded-sm cursor-w-resize shadow-md hover:bg-blue-600 transition-colors z-10"
+              onMouseDown={(e) => handleResizeStart(e, 'w')}
+              title="Drag to resize"
+            />
+          </>
+        )}
 
         {/* Controls overlay */}
         {isActive && (
@@ -215,12 +335,29 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
             </button>
             <div className="w-px h-5 bg-gray-200 mx-1" />
             <button
+              onClick={() => setMaintainAspectRatio(!maintainAspectRatio)}
+              className={`p-1.5 rounded text-xs font-medium ${
+                maintainAspectRatio ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 text-gray-500'
+              }`}
+              title={maintainAspectRatio ? 'Aspect ratio locked' : 'Aspect ratio unlocked'}
+            >
+              {maintainAspectRatio ? '🔒' : '🔓'}
+            </button>
+            <div className="w-px h-5 bg-gray-200 mx-1" />
+            <button
               onClick={handleRemove}
               className="p-1.5 rounded hover:bg-red-100 text-gray-500 hover:text-red-600"
               title="Remove image"
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+        )}
+
+        {/* Resize indicator */}
+        {isResizing && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+            {imageWidth ? `${imageWidth}px` : 'Auto'}
           </div>
         )}
       </div>

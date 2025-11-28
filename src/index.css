@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom placeholder styling for contentEditable */
+[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  @apply text-gray-400 pointer-events-none;
+}

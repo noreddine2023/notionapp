@@ -7,6 +7,10 @@ import type { Paper, Author, SearchFilters, SearchResult } from '../types/paper'
 
 const BASE_URL = 'https://api.core.ac.uk/v3';
 
+// Rate limiting
+const RATE_LIMIT_DELAY = 200;
+let lastRequestTime = 0;
+
 interface CoreAuthor {
   name: string;
 }
@@ -33,15 +37,63 @@ interface CoreSearchResponse {
 }
 
 /**
+ * Wait for rate limit
+ */
+async function waitForRateLimit(): Promise<void> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
+    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest));
+  }
+  lastRequestTime = Date.now();
+}
+
+/**
+ * Fetch with retry logic
+ */
+async function fetchWithRetry(
+  url: string,
+  maxRetries: number = 3
+): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      await waitForRateLimit();
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (response.status === 429) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Request failed after retries');
+}
+
+/**
  * Normalize CORE work to common Paper interface
  */
 function normalizePaper(work: CoreWork): Paper {
   return {
     id: `core_${work.id}`,
     title: work.title || 'Untitled',
-    authors: work.authors?.map((a): Author => ({
-      name: a.name,
-    })) || [],
+    authors: (work.authors || []).map((a): Author => ({
+      name: a?.name || 'Unknown Author',
+    })),
     abstract: work.abstract || '',
     year: work.yearPublished || 0,
     doi: work.doi,
@@ -90,11 +142,7 @@ export async function searchPapers(
   }
 
   try {
-    const response = await fetch(`${BASE_URL}/search/works?${params.toString()}`, {
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
+    const response = await fetchWithRetry(`${BASE_URL}/search/works?${params.toString()}`);
     
     if (!response.ok) {
       throw new Error(`CORE API error: ${response.status}`);
@@ -102,7 +150,18 @@ export async function searchPapers(
 
     const data: CoreSearchResponse = await response.json();
 
-    let papers = data.results.map(normalizePaper);
+    if (!data || !data.results) {
+      return {
+        papers: [],
+        totalResults: 0,
+        page,
+        pageSize,
+      };
+    }
+
+    let papers = data.results
+      .filter(w => w && w.id && w.title)
+      .map(normalizePaper);
 
     // Filter for open access only if requested
     if (filters.openAccessOnly) {
@@ -111,18 +170,13 @@ export async function searchPapers(
 
     return {
       papers,
-      totalResults: data.totalHits,
+      totalResults: data.totalHits || papers.length,
       page,
       pageSize,
     };
   } catch (error) {
     console.error('CORE search error:', error);
-    return {
-      papers: [],
-      totalResults: 0,
-      page,
-      pageSize,
-    };
+    throw error;
   }
 }
 
@@ -134,17 +188,21 @@ export async function getPaperDetails(paperId: string): Promise<Paper | null> {
   const cleanId = paperId.replace(/^core_/, '');
   
   try {
-    const response = await fetch(`${BASE_URL}/works/${cleanId}`, {
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
+    const response = await fetchWithRetry(`${BASE_URL}/works/${cleanId}`);
     
     if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
       throw new Error(`CORE API error: ${response.status}`);
     }
 
     const data: CoreWork = await response.json();
+    
+    if (!data || !data.id) {
+      return null;
+    }
+    
     return normalizePaper(data);
   } catch (error) {
     console.error('CORE paper details error:', error);

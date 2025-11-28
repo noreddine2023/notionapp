@@ -35,7 +35,6 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
     papers,
     projects,
     currentView,
-    getSubProjects,
     getProjectPapers,
     selectedProjectId,
   } = useResearchStore();
@@ -57,7 +56,15 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
     });
   }, []);
 
-  const rootProjects = getSubProjects(null);
+  // Compute root projects directly from state for proper reactivity
+  const rootProjects = projects.filter(p => !p.parentId);
+  
+  // Helper to get sub-projects
+  const getSubProjects = useCallback((parentId: string | null) => {
+    return projects.filter(p => 
+      parentId === null ? !p.parentId : p.parentId === parentId
+    );
+  }, [projects]);
 
   const renderProject = (project: ResearchProject, level: number = 0) => {
     const isExpanded = expandedProjectIds.has(project.id);

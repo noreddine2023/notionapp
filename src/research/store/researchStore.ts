@@ -205,7 +205,9 @@ export const useResearchStore = create<ResearchStore>()(
       },
 
       getSubProjects: (parentId) => {
-        return get().projects.filter(p => p.parentId === parentId);
+        return get().projects.filter(p => 
+          parentId === null ? !p.parentId : p.parentId === parentId
+        );
       },
 
       // Navigation

@@ -20,7 +20,7 @@ import { SortableBlock } from './SortableBlock';
 import { SlashMenu } from './SlashMenuBlock';
 import { EditorToolbar } from './EditorToolbar';
 import type { Block, BlockType } from '../types/blocks';
-import { convertFromOldFormat as _convertFromOldFormat, createBlock } from '../utils/blockUtils';
+import { createBlock } from '../utils/blockUtils';
 
 interface NoteEditorProps {
   noteId: string | null;
@@ -85,29 +85,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       // No note selected - show empty state or create new
       setBlocks([createBlock('text', '')]);
     }
-  }, [noteId, activeNote?.id]); // Only reload when note ID changes
-
-  // Auto-save when debounced blocks change
-  useEffect(() => {
-    if (noteId && hasUnsavedChanges) {
-      handleSave();
-    }
-  }, [debouncedBlocks]);
-
-  // Mark as having unsaved changes when blocks change
-  useEffect(() => {
-    if (noteId) {
-      setHasUnsavedChanges(true);
-    }
-    onChange?.(blocks);
-  }, [blocks, onChange, noteId]);
-
-  // Auto-focus first block on mount
-  useEffect(() => {
-    if (autoFocus && blocks.length > 0 && !activeBlockId) {
-      setActiveBlock(blocks[0].id);
-    }
-  }, [autoFocus, blocks, activeBlockId, setActiveBlock]);
+  }, [noteId, activeNote?.id, setBlocks]); // Only reload when note ID changes
 
   // Save function
   const handleSave = useCallback(() => {
@@ -123,6 +101,28 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
       setIsSaving(false);
     }, 200);
   }, [noteId, blocks, updateNoteContent]);
+
+  // Auto-save when debounced blocks change
+  useEffect(() => {
+    if (noteId && hasUnsavedChanges) {
+      handleSave();
+    }
+  }, [debouncedBlocks, noteId, hasUnsavedChanges, handleSave]);
+
+  // Mark as having unsaved changes when blocks change
+  useEffect(() => {
+    if (noteId) {
+      setHasUnsavedChanges(true);
+    }
+    onChange?.(blocks);
+  }, [blocks, onChange, noteId]);
+
+  // Auto-focus first block on mount
+  useEffect(() => {
+    if (autoFocus && blocks.length > 0 && !activeBlockId) {
+      setActiveBlock(blocks[0].id);
+    }
+  }, [autoFocus, blocks, activeBlockId, setActiveBlock]);
 
   // Manual save
   const handleManualSave = useCallback(() => {

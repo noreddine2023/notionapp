@@ -21,6 +21,7 @@ import { SlashMenu } from './SlashMenuBlock';
 import { EditorToolbar } from './EditorToolbar';
 import type { Block, BlockType } from '../types/blocks';
 import { createBlock } from '../utils/blockUtils';
+import { sanitizeUrl } from '../utils/sanitize';
 
 interface NoteEditorProps {
   noteId: string | null;
@@ -235,7 +236,12 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
         {
           const url = window.prompt('Enter URL:');
           if (url) {
-            document.execCommand('createLink', false, url);
+            const sanitizedUrl = sanitizeUrl(url);
+            if (sanitizedUrl) {
+              document.execCommand('createLink', false, sanitizedUrl);
+            } else {
+              alert('Invalid URL. Please enter a valid http, https, mailto, or relative URL.');
+            }
           }
         }
         break;

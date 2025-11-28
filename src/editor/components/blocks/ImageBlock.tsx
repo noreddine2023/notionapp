@@ -12,7 +12,6 @@ interface ImageBlockProps {
 // Minimum and maximum dimensions for resizing
 const MIN_WIDTH = 100;
 const MAX_WIDTH = 800;
-const MIN_HEIGHT = 50;
 
 export const ImageBlock: React.FC<ImageBlockProps> = ({
   block,
@@ -140,30 +139,26 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({
   useEffect(() => {
     if (!isResizing || !resizeStart) return;
 
+    let lastWidth = resizeStart.width;
+
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - resizeStart.x;
-      const deltaY = e.clientY - resizeStart.y;
       
       let newWidth = resizeStart.width + deltaX;
       
       // Constrain width
       newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
       
-      // Calculate height maintaining aspect ratio if enabled
-      let newHeight: number;
-      if (maintainAspectRatio && resizeStart.height > 0) {
-        const aspectRatio = resizeStart.width / resizeStart.height;
-        newHeight = newWidth / aspectRatio;
-      } else {
-        newHeight = resizeStart.height + deltaY;
-        newHeight = Math.max(MIN_HEIGHT, newHeight);
+      // Only update if width changed significantly (optimization)
+      if (Math.abs(newWidth - lastWidth) >= 2) {
+        lastWidth = newWidth;
+        // Update the image dimensions in block props
+        // Height is auto via CSS when maintainAspectRatio is true
+        onUpdate(block.content, {
+          ...block.props,
+          width: Math.round(newWidth),
+        });
       }
-
-      // Update the image dimensions in block props
-      onUpdate(block.content, {
-        ...block.props,
-        width: Math.round(newWidth),
-      });
     };
 
     const handleMouseUp = () => {

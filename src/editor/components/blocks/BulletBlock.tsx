@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, KeyboardEvent, FormEvent } from 'react';
 import type { Block } from '../../types/blocks';
 import { getBlockPlaceholder } from '../../utils/blockUtils';
+import { sanitizeHtml } from '../../utils/sanitize';
 
 interface BulletBlockProps {
   block: Block;
@@ -41,8 +42,9 @@ export const BulletBlock: React.FC<BulletBlockProps> = ({
   // Sync content with block.content - use innerHTML to preserve formatting
   useEffect(() => {
     if (contentRef.current && !isInternalUpdate.current) {
-      if (contentRef.current.innerHTML !== block.content) {
-        contentRef.current.innerHTML = block.content;
+      const sanitizedContent = sanitizeHtml(block.content);
+      if (contentRef.current.innerHTML !== sanitizedContent) {
+        contentRef.current.innerHTML = sanitizedContent;
       }
     }
     isInternalUpdate.current = false;

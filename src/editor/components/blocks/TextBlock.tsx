@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, KeyboardEvent, FormEvent } from 'react';
 import type { Block } from '../../types/blocks';
 import { getBlockPlaceholder } from '../../utils/blockUtils';
+import { sanitizeHtml } from '../../utils/sanitize';
 
 interface TextBlockProps {
   block: Block;
@@ -40,8 +41,10 @@ export const TextBlock: React.FC<TextBlockProps> = ({
   useEffect(() => {
     if (contentRef.current && !isInternalUpdate.current) {
       // Only update if content actually differs (to preserve cursor position)
-      if (contentRef.current.innerHTML !== block.content) {
-        contentRef.current.innerHTML = block.content;
+      // Sanitize HTML to prevent XSS
+      const sanitizedContent = sanitizeHtml(block.content);
+      if (contentRef.current.innerHTML !== sanitizedContent) {
+        contentRef.current.innerHTML = sanitizedContent;
       }
     }
     isInternalUpdate.current = false;

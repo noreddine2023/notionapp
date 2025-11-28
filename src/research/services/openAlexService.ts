@@ -1,0 +1,197 @@
+/**
+ * OpenAlex API Service
+ * https://docs.openalex.org/
+ */
+
+import type { Paper, Author, SearchFilters, SearchResult } from '../types/paper';
+
+const BASE_URL = 'https://api.openalex.org';
+
+interface OpenAlexAuthor {
+  author: {
+    id: string;
+    display_name: string;
+  };
+}
+
+interface OpenAlexWork {
+  id: string;
+  title: string;
+  abstract_inverted_index?: Record<string, number[]>;
+  publication_year: number | null;
+  authorships: OpenAlexAuthor[];
+  primary_location?: {
+    source?: {
+      display_name: string;
+    };
+  };
+  cited_by_count: number;
+  open_access: {
+    is_oa: boolean;
+    oa_url?: string;
+  };
+  doi?: string;
+  keywords?: Array<{ keyword: string }>;
+  concepts?: Array<{ display_name: string }>;
+}
+
+interface OpenAlexSearchResponse {
+  meta: {
+    count: number;
+    page: number;
+    per_page: number;
+  };
+  results: OpenAlexWork[];
+}
+
+/**
+ * Reconstruct abstract from inverted index
+ */
+function reconstructAbstract(invertedIndex: Record<string, number[]> | undefined): string {
+  if (!invertedIndex) return '';
+  
+  const words: { word: string; position: number }[] = [];
+  
+  for (const [word, positions] of Object.entries(invertedIndex)) {
+    for (const position of positions) {
+      words.push({ word, position });
+    }
+  }
+  
+  words.sort((a, b) => a.position - b.position);
+  return words.map(w => w.word).join(' ');
+}
+
+/**
+ * Normalize OpenAlex work to common Paper interface
+ */
+function normalizePaper(work: OpenAlexWork): Paper {
+  const abstractText = reconstructAbstract(work.abstract_inverted_index);
+  
+  // Extract keywords from concepts or keywords
+  const keywords: string[] = [];
+  if (work.keywords) {
+    keywords.push(...work.keywords.map(k => k.keyword));
+  }
+  if (work.concepts) {
+    keywords.push(...work.concepts.slice(0, 5).map(c => c.display_name));
+  }
+
+  // Extract OpenAlex ID from URL
+  const openAlexId = work.id.split('/').pop() || work.id;
+
+  return {
+    id: `oa_${openAlexId}`,
+    title: work.title || 'Untitled',
+    authors: work.authorships.map((a): Author => ({
+      name: a.author.display_name,
+      id: a.author.id,
+    })),
+    abstract: abstractText,
+    year: work.publication_year || 0,
+    doi: work.doi?.replace('https://doi.org/', ''),
+    venue: work.primary_location?.source?.display_name,
+    citationCount: work.cited_by_count || 0,
+    pdfUrl: work.open_access.oa_url,
+    openAccess: work.open_access.is_oa,
+    keywords: [...new Set(keywords)].slice(0, 10),
+    source: 'openalex',
+    isRead: false,
+    isFavorite: false,
+  };
+}
+
+/**
+ * Search papers using OpenAlex API
+ */
+export async function searchPapers(
+  query: string,
+  filters: SearchFilters = {},
+  page: number = 1,
+  pageSize: number = 10
+): Promise<SearchResult> {
+  const params = new URLSearchParams({
+    search: query,
+    page: page.toString(),
+    per_page: pageSize.toString(),
+    mailto: 'research@example.com', // Good practice for OpenAlex
+  });
+
+  // Build filter string
+  const filterParts: string[] = [];
+  
+  if (filters.yearFrom) {
+    filterParts.push(`publication_year:>=${filters.yearFrom}`);
+  }
+  if (filters.yearTo) {
+    filterParts.push(`publication_year:<=${filters.yearTo}`);
+  }
+  if (filters.openAccessOnly) {
+    filterParts.push('is_oa:true');
+  }
+  
+  if (filterParts.length > 0) {
+    params.append('filter', filterParts.join(','));
+  }
+
+  // Add sorting
+  if (filters.sortBy === 'citations') {
+    params.append('sort', 'cited_by_count:desc');
+  } else if (filters.sortBy === 'date') {
+    params.append('sort', 'publication_year:desc');
+  } else {
+    params.append('sort', 'relevance_score:desc');
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/works?${params.toString()}`);
+    
+    if (!response.ok) {
+      throw new Error(`OpenAlex API error: ${response.status}`);
+    }
+
+    const data: OpenAlexSearchResponse = await response.json();
+
+    return {
+      papers: data.results.map(normalizePaper),
+      totalResults: data.meta.count,
+      page: data.meta.page,
+      pageSize: data.meta.per_page,
+    };
+  } catch (error) {
+    console.error('OpenAlex search error:', error);
+    return {
+      papers: [],
+      totalResults: 0,
+      page,
+      pageSize,
+    };
+  }
+}
+
+/**
+ * Get paper details by ID
+ */
+export async function getPaperDetails(paperId: string): Promise<Paper | null> {
+  // Remove the oa_ prefix if present
+  const cleanId = paperId.replace(/^oa_/, '');
+  
+  try {
+    const response = await fetch(`${BASE_URL}/works/${cleanId}?mailto=research@example.com`);
+    
+    if (!response.ok) {
+      throw new Error(`OpenAlex API error: ${response.status}`);
+    }
+
+    const data: OpenAlexWork = await response.json();
+    return normalizePaper(data);
+  } catch (error) {
+    console.error('OpenAlex paper details error:', error);
+    return null;
+  }
+}
+
+export const openAlexService = {
+  searchPapers,
+  getPaperDetails,
+};

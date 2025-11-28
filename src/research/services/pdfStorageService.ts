@@ -217,7 +217,7 @@ export async function getAllReadingProgress(): Promise<ReadingProgress[]> {
  * Generate unique annotation ID
  */
 function generateAnnotationId(): string {
-  return `ann_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `ann_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**

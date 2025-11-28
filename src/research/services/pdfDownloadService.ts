@@ -73,7 +73,6 @@ export async function downloadPdf(
   try {
     // Try to use a CORS proxy if direct access fails
     let response: Response;
-    let usedProxy = false;
     
     try {
       response = await fetch(pdfUrl, {
@@ -87,7 +86,6 @@ export async function downloadPdf(
       
       // Try through a different approach - some academic APIs allow CORS
       response = await fetch(pdfUrl);
-      usedProxy = true;
     }
     
     if (!response.ok) {
@@ -144,7 +142,7 @@ export async function downloadPdf(
       }
       
       const name = fileName || extractFileName(pdfUrl, paperId);
-      await pdfStorageService.savePdf(paperId, blob, name, usedProxy ? 'api' : 'api');
+      await pdfStorageService.savePdf(paperId, blob, name, 'api');
       
       notifyProgress({
         paperId,

@@ -2,7 +2,7 @@
  * Paper Detail Component - Detailed view of a paper
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   BookOpen,
@@ -20,11 +20,15 @@ import {
   Loader2,
   ChevronDown,
   Download,
+  Upload,
+  HardDrive,
 } from 'lucide-react';
 import { usePaperDetails } from '../hooks/usePaperDetails';
 import { useResearchStore } from '../store/researchStore';
 import { generateCitation, copyToClipboard } from '../services/citationService';
-import type { CitationFormat } from '../types/paper';
+import { pdfStorageService } from '../services/pdfStorageService';
+import { pdfDownloadService, DownloadProgress, onDownloadProgress } from '../services/pdfDownloadService';
+import type { CitationFormat, ReadingProgress } from '../types/paper';
 
 interface PaperDetailProps {
   paperId: string;
@@ -46,6 +50,10 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
   const [showAddToProject, setShowAddToProject] = useState(false);
   const [personalNotes, setPersonalNotes] = useState('');
   const [showFullAbstract, setShowFullAbstract] = useState(false);
+  const [hasLocalPdf, setHasLocalPdf] = useState(false);
+  const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { paper, isLoading, error } = usePaperDetails(paperId);
   
@@ -66,6 +74,33 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
   const isInLibrary = isPaperInLibrary(paperId);
   const libraryPaper = getPaperById(paperId);
 
+  // Check for local PDF and reading progress
+  useEffect(() => {
+    async function checkPdfStatus() {
+      const hasPdf = await pdfStorageService.hasLocalPdf(paperId);
+      setHasLocalPdf(hasPdf);
+      
+      if (hasPdf) {
+        const progress = await pdfStorageService.getReadingProgress(paperId);
+        setReadingProgress(progress);
+      }
+    }
+    checkPdfStatus();
+  }, [paperId]);
+
+  // Subscribe to download progress
+  useEffect(() => {
+    const unsubscribe = onDownloadProgress((progress) => {
+      if (progress.paperId === paperId) {
+        setDownloadProgress(progress);
+        if (progress.status === 'completed') {
+          setHasLocalPdf(true);
+        }
+      }
+    });
+    return unsubscribe;
+  }, [paperId]);
+
   React.useEffect(() => {
     if (libraryPaper?.personalNotes) {
       setPersonalNotes(libraryPaper.personalNotes);
@@ -75,6 +110,29 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
   const handleBack = () => {
     setSelectedPaper(null);
     setCurrentView('search');
+  };
+
+  const handleReadPaper = () => {
+    setCurrentView('pdf-reader');
+  };
+
+  const handleDownloadPdf = async () => {
+    if (paper?.pdfUrl) {
+      await pdfDownloadService.downloadPdf(paperId, paper.pdfUrl);
+    }
+  };
+
+  const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      await pdfDownloadService.uploadPdf(paperId, file);
+      setHasLocalPdf(true);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleCopyTitle = async () => {
@@ -144,8 +202,79 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
           Back
         </button>
 
-        {/* Action buttons */}
+        {/* PDF Status Badge */}
         <div className="flex items-center gap-2 mb-3">
+          {hasLocalPdf ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
+              <HardDrive className="w-3 h-3" />
+              PDF Available
+            </span>
+          ) : paper?.pdfUrl ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+              PDF Online
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+              No PDF
+            </span>
+          )}
+          
+          {readingProgress && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+              <BookOpen className="w-3 h-3" />
+              {readingProgress.percentComplete}% read
+            </span>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {/* Read Paper Button */}
+          {hasLocalPdf ? (
+            <button
+              onClick={handleReadPaper}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <BookOpen className="w-4 h-4" />
+              Read Paper
+            </button>
+          ) : paper?.pdfUrl ? (
+            downloadProgress?.status === 'downloading' ? (
+              <button
+                disabled
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 rounded-md"
+              >
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Downloading... {downloadProgress.progress}%
+              </button>
+            ) : (
+              <button
+                onClick={handleDownloadPdf}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Download PDF
+              </button>
+            )
+          ) : null}
+
+          {/* Upload PDF */}
+          <label className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors cursor-pointer">
+            {isUploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            Upload PDF
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={handleUploadPdf}
+              className="hidden"
+              disabled={isUploading}
+            />
+          </label>
+
           <button
             onClick={() => {
               if (isInLibrary) {

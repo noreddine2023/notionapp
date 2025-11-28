@@ -396,7 +396,7 @@ export const ResearchProjects: React.FC = () => {
               Delete Project?
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete &quot;{deleteConfirm.name}&quot;?
+              Are you sure you want to delete "{deleteConfirm.name}"?
               Sub-projects will also be deleted. Papers will remain in your library.
             </p>
             <div className="flex justify-end gap-2">

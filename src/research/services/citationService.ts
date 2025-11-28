@@ -6,6 +6,24 @@
 import type { Paper, CitationFormat } from '../types/paper';
 
 /**
+ * Parse author name into last name and other parts
+ * Handles various name formats including single names, hyphenated names
+ */
+function parseAuthorName(fullName: string): { lastName: string; otherNames: string[] } {
+  const trimmedName = fullName.trim();
+  
+  // Handle single name
+  if (!trimmedName.includes(' ')) {
+    return { lastName: trimmedName, otherNames: [] };
+  }
+  
+  const parts = trimmedName.split(' ').filter(p => p.length > 0);
+  const lastName = parts.pop() || trimmedName;
+  
+  return { lastName, otherNames: parts };
+}
+
+/**
  * Format author names for citations
  */
 function formatAuthors(paper: Paper, format: CitationFormat): string {
@@ -19,77 +37,71 @@ function formatAuthors(paper: Paper, format: CitationFormat): string {
     case 'apa':
     case 'chicago':
       if (authors.length === 1) {
-        const parts = authors[0].name.split(' ');
-        const lastName = parts.pop() || '';
-        const initials = parts.map(n => n[0] + '.').join(' ');
-        return `${lastName}, ${initials}`.trim();
+        const { lastName, otherNames } = parseAuthorName(authors[0].name);
+        const initials = otherNames.map(n => n[0] ? n[0] + '.' : '').join(' ');
+        return initials ? `${lastName}, ${initials}` : lastName;
       }
       if (authors.length === 2) {
         return authors.map(a => {
-          const parts = a.name.split(' ');
-          const lastName = parts.pop() || '';
-          const initials = parts.map(n => n[0] + '.').join(' ');
-          return `${lastName}, ${initials}`.trim();
+          const { lastName, otherNames } = parseAuthorName(a.name);
+          const initials = otherNames.map(n => n[0] ? n[0] + '.' : '').join(' ');
+          return initials ? `${lastName}, ${initials}` : lastName;
         }).join(' & ');
       }
       if (authors.length > 2) {
-        const parts = authors[0].name.split(' ');
-        const lastName = parts.pop() || '';
-        const initials = parts.map(n => n[0] + '.').join(' ');
-        return `${lastName}, ${initials} et al.`.trim();
+        const { lastName, otherNames } = parseAuthorName(authors[0].name);
+        const initials = otherNames.map(n => n[0] ? n[0] + '.' : '').join(' ');
+        const formatted = initials ? `${lastName}, ${initials}` : lastName;
+        return `${formatted} et al.`;
       }
       return authors[0].name;
 
     case 'mla':
       if (authors.length === 1) {
-        const parts = authors[0].name.split(' ');
-        const lastName = parts.pop() || '';
-        const firstName = parts.join(' ');
-        return `${lastName}, ${firstName}`;
+        const { lastName, otherNames } = parseAuthorName(authors[0].name);
+        const firstName = otherNames.join(' ');
+        return firstName ? `${lastName}, ${firstName}` : lastName;
       }
       if (authors.length === 2) {
-        const first = authors[0].name.split(' ');
-        const lastName1 = first.pop() || '';
-        const firstName1 = first.join(' ');
-        return `${lastName1}, ${firstName1}, and ${authors[1].name}`;
+        const { lastName: lastName1, otherNames: otherNames1 } = parseAuthorName(authors[0].name);
+        const firstName1 = otherNames1.join(' ');
+        const firstAuthor = firstName1 ? `${lastName1}, ${firstName1}` : lastName1;
+        return `${firstAuthor}, and ${authors[1].name}`;
       }
       if (authors.length > 2) {
-        const parts = authors[0].name.split(' ');
-        const lastName = parts.pop() || '';
-        const firstName = parts.join(' ');
-        return `${lastName}, ${firstName}, et al.`;
+        const { lastName, otherNames } = parseAuthorName(authors[0].name);
+        const firstName = otherNames.join(' ');
+        const formatted = firstName ? `${lastName}, ${firstName}` : lastName;
+        return `${formatted}, et al.`;
       }
       return authors[0].name;
 
     case 'harvard':
       if (authors.length === 1) {
-        const parts = authors[0].name.split(' ');
-        const lastName = parts.pop() || '';
-        const initials = parts.map(n => n[0] + '.').join('');
-        return `${lastName}, ${initials}`;
+        const { lastName, otherNames } = parseAuthorName(authors[0].name);
+        const initials = otherNames.map(n => n[0] ? n[0] + '.' : '').join('');
+        return initials ? `${lastName}, ${initials}` : lastName;
       }
       if (authors.length === 2) {
         return authors.map(a => {
-          const parts = a.name.split(' ');
-          const lastName = parts.pop() || '';
-          const initials = parts.map(n => n[0] + '.').join('');
-          return `${lastName}, ${initials}`;
+          const { lastName, otherNames } = parseAuthorName(a.name);
+          const initials = otherNames.map(n => n[0] ? n[0] + '.' : '').join('');
+          return initials ? `${lastName}, ${initials}` : lastName;
         }).join(' and ');
       }
       if (authors.length > 2) {
-        const parts = authors[0].name.split(' ');
-        const lastName = parts.pop() || '';
-        const initials = parts.map(n => n[0] + '.').join('');
-        return `${lastName}, ${initials} et al.`;
+        const { lastName, otherNames } = parseAuthorName(authors[0].name);
+        const initials = otherNames.map(n => n[0] ? n[0] + '.' : '').join('');
+        const formatted = initials ? `${lastName}, ${initials}` : lastName;
+        return `${formatted} et al.`;
       }
       return authors[0].name;
 
     case 'ieee':
       return authors.map(a => {
-        const parts = a.name.split(' ');
-        const lastName = parts.pop() || '';
-        const initials = parts.map(n => n[0] + '.').join(' ');
-        return `${initials} ${lastName}`.trim();
+        const { lastName, otherNames } = parseAuthorName(a.name);
+        const initials = otherNames.map(n => n[0] ? n[0] + '.' : '').join(' ');
+        return initials ? `${initials} ${lastName}` : lastName;
       }).join(', ');
 
     case 'bibtex':
@@ -104,10 +116,10 @@ function formatAuthors(paper: Paper, format: CitationFormat): string {
  * Generate BibTeX key from paper
  */
 function generateBibtexKey(paper: Paper): string {
-  const firstAuthor = paper.authors[0]?.name.split(' ').pop()?.toLowerCase() || 'unknown';
+  const { lastName } = parseAuthorName(paper.authors[0]?.name || 'unknown');
   const year = paper.year || 'n.d.';
   const titleWord = paper.title.split(' ')[0]?.toLowerCase().replace(/[^a-z]/g, '') || 'paper';
-  return `${firstAuthor}${year}${titleWord}`;
+  return `${lastName.toLowerCase()}${year}${titleWord}`;
 }
 
 /**

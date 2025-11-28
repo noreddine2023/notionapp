@@ -114,7 +114,6 @@ export async function searchPapers(
     search: query,
     page: page.toString(),
     per_page: pageSize.toString(),
-    mailto: 'research@example.com', // Good practice for OpenAlex
   });
 
   // Build filter string
@@ -177,7 +176,7 @@ export async function getPaperDetails(paperId: string): Promise<Paper | null> {
   const cleanId = paperId.replace(/^oa_/, '');
   
   try {
-    const response = await fetch(`${BASE_URL}/works/${cleanId}?mailto=research@example.com`);
+    const response = await fetch(`${BASE_URL}/works/${cleanId}`);
     
     if (!response.ok) {
       throw new Error(`OpenAlex API error: ${response.status}`);

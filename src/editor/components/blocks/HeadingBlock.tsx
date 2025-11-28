@@ -20,6 +20,7 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
   registerRef,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const isInternalUpdate = useRef(false);
 
   // Focus the element when isActive changes
   useEffect(() => {
@@ -35,16 +36,20 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
     }
   }, [isActive]);
 
-  // Sync content with block.content
+  // Sync content with block.content - use innerHTML to preserve formatting
   useEffect(() => {
-    if (contentRef.current && contentRef.current.textContent !== block.content) {
-      contentRef.current.textContent = block.content;
+    if (contentRef.current && !isInternalUpdate.current) {
+      if (contentRef.current.innerHTML !== block.content) {
+        contentRef.current.innerHTML = block.content;
+      }
     }
+    isInternalUpdate.current = false;
   }, [block.content]);
 
   const handleInput = (e: FormEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
-    onUpdate(target.textContent || '');
+    isInternalUpdate.current = true;
+    onUpdate(target.innerHTML || '');
   };
 
   const handleRef = (el: HTMLDivElement | null) => {
@@ -74,7 +79,14 @@ export const HeadingBlock: React.FC<HeadingBlockProps> = ({
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       data-placeholder={getBlockPlaceholder(block.type)}
-      className={`outline-none min-h-[1.5em] leading-tight ${getHeadingClass(block.type)}`}
+      className={`outline-none min-h-[1.5em] leading-tight break-words ${getHeadingClass(block.type)}`}
+      style={{
+        maxWidth: '100%',
+        overflowWrap: 'break-word',
+        wordWrap: 'break-word',
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap',
+      }}
     />
   );
 };

@@ -20,6 +20,7 @@ export const TextBlock: React.FC<TextBlockProps> = ({
   registerRef,
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const isInternalUpdate = useRef(false);
 
   // Focus the element when isActive changes
   useEffect(() => {
@@ -35,16 +36,22 @@ export const TextBlock: React.FC<TextBlockProps> = ({
     }
   }, [isActive]);
 
-  // Sync content with block.content
+  // Sync content with block.content - use innerHTML to preserve formatting
   useEffect(() => {
-    if (contentRef.current && contentRef.current.textContent !== block.content) {
-      contentRef.current.textContent = block.content;
+    if (contentRef.current && !isInternalUpdate.current) {
+      // Only update if content actually differs (to preserve cursor position)
+      if (contentRef.current.innerHTML !== block.content) {
+        contentRef.current.innerHTML = block.content;
+      }
     }
+    isInternalUpdate.current = false;
   }, [block.content]);
 
   const handleInput = (e: FormEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
-    onUpdate(target.textContent || '');
+    isInternalUpdate.current = true;
+    // Use innerHTML to preserve formatting like bold, italic, etc.
+    onUpdate(target.innerHTML || '');
   };
 
   const handleRef = (el: HTMLDivElement | null) => {
@@ -61,7 +68,14 @@ export const TextBlock: React.FC<TextBlockProps> = ({
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       data-placeholder={getBlockPlaceholder(block.type)}
-      className="outline-none min-h-[1.5em] text-base leading-relaxed"
+      className="outline-none min-h-[1.5em] text-base leading-relaxed break-words overflow-wrap-anywhere"
+      style={{
+        maxWidth: '100%',
+        overflowWrap: 'break-word',
+        wordWrap: 'break-word',
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap',
+      }}
     />
   );
 };

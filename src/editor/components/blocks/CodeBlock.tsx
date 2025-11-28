@@ -53,7 +53,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
   };
 
   return (
-    <div className="bg-gray-100 rounded-lg p-4 font-mono text-sm border border-gray-200">
+    <div className="bg-gray-100 rounded-lg p-4 font-mono text-sm border border-gray-200 overflow-x-auto">
       <div
         ref={handleRef}
         contentEditable
@@ -62,7 +62,12 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
         onKeyDown={onKeyDown}
         onFocus={onFocus}
         data-placeholder={getBlockPlaceholder(block.type)}
-        className="outline-none min-h-[1.5em] whitespace-pre-wrap"
+        className="outline-none min-h-[1.5em] whitespace-pre-wrap break-words"
+        style={{
+          maxWidth: '100%',
+          overflowWrap: 'break-word',
+          wordWrap: 'break-word',
+        }}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useCallback, KeyboardEvent, useRef } from 'react';
-import { GripVertical, Plus } from 'lucide-react';
+import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import type { Block as BlockType } from '../types/blocks';
 import { BlockContent } from './BlockContent';
 import { useEditorStore } from '../store/editorStore';
@@ -221,6 +221,19 @@ export const Block: React.FC<BlockProps> = ({
     focusBlockAt(newBlockId, 'start');
   }, [block.id, addBlock, focusBlockAt]);
 
+  // Handle delete button click
+  const handleDeleteBlock = useCallback(() => {
+    const prevBlockId = getPreviousBlockId(block.id);
+    const nextBlockId = getNextBlockId(block.id);
+    deleteBlock(block.id);
+    // Focus previous or next block after deletion
+    if (prevBlockId) {
+      focusBlockAt(prevBlockId, 'end');
+    } else if (nextBlockId) {
+      focusBlockAt(nextBlockId, 'start');
+    }
+  }, [block.id, deleteBlock, getPreviousBlockId, getNextBlockId, focusBlockAt]);
+
   const registerRef = useCallback((el: HTMLDivElement | null) => {
     contentRef.current = el;
   }, []);
@@ -240,6 +253,7 @@ export const Block: React.FC<BlockProps> = ({
           onClick={handleAddBlock}
           className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
           tabIndex={-1}
+          title="Add block below"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -249,8 +263,19 @@ export const Block: React.FC<BlockProps> = ({
           {...dragHandleProps}
           className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing transition-colors"
           tabIndex={-1}
+          title="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />
+        </button>
+
+        {/* Delete button */}
+        <button
+          onClick={handleDeleteBlock}
+          className="p-1 rounded hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors"
+          tabIndex={-1}
+          title="Delete block"
+        >
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
 

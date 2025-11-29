@@ -15,6 +15,7 @@ import {
   Plus,
   X,
   Download,
+  Layout,
 } from 'lucide-react';
 import { useResearchStore } from '../store/researchStore';
 import { PaperCard } from './PaperCard';
@@ -51,6 +52,7 @@ export const ResearchProjects: React.FC = () => {
     removePaperFromProject,
     setCurrentView,
     setSelectedPaper,
+    setSelectedProject,
   } = useResearchStore();
 
   // Close context menu when clicking outside
@@ -213,34 +215,57 @@ export const ResearchProjects: React.FC = () => {
             {/* Sub-projects */}
             {subProjects.map((sub) => renderProject(sub, level + 1))}
             
-            {/* Papers in project */}
-            {isSelected && papers.length > 0 && (
-              <div className="px-4 py-2 space-y-2 bg-gray-50">
-                {papers.map((paper) => (
-                  <div key={paper.id} className="relative">
-                    <PaperCard
-                      paper={paper}
-                      showLibraryActions={false}
-                      onClick={() => handlePaperClick(paper.id)}
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removePaperFromProject(paper.id, project.id);
-                      }}
-                      className="absolute top-2 right-2 p-1 bg-white rounded shadow hover:bg-red-50 text-gray-400 hover:text-red-600"
-                      title="Remove from project"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+            {/* Whiteboard button and Papers */}
+            {isSelected && (
+              <div className="bg-gray-50 border-t border-gray-100">
+                {/* Open Whiteboard button */}
+                <div className="px-4 py-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedProject(project.id);
+                      setCurrentView('whiteboard');
+                    }}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all shadow-sm"
+                  >
+                    <Layout className="w-4 h-4" />
+                    <span className="font-medium">Open Whiteboard</span>
+                  </button>
+                </div>
+                
+                {/* Papers in project */}
+                {papers.length > 0 && (
+                  <div className="px-4 pb-3 space-y-2">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                      Papers ({papers.length})
+                    </p>
+                    {papers.map((paper) => (
+                      <div key={paper.id} className="relative">
+                        <PaperCard
+                          paper={paper}
+                          showLibraryActions={false}
+                          onClick={() => handlePaperClick(paper.id)}
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removePaperFromProject(paper.id, project.id);
+                          }}
+                          className="absolute top-2 right-2 p-1 bg-white rounded shadow hover:bg-red-50 text-gray-400 hover:text-red-600"
+                          title="Remove from project"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-            
-            {isSelected && papers.length === 0 && (
-              <div className="px-8 py-4 text-sm text-gray-500 italic">
-                No papers in this project
+                )}
+                
+                {papers.length === 0 && (
+                  <div className="px-8 pb-4 text-sm text-gray-500 italic">
+                    No papers in this project
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -335,6 +360,18 @@ export const ResearchProjects: React.FC = () => {
           className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[180px]"
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
+          <button
+            onClick={() => {
+              setSelectedProject(contextMenu.projectId);
+              setCurrentView('whiteboard');
+              setContextMenu(null);
+            }}
+            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            <Layout className="w-4 h-4" />
+            Open Whiteboard
+          </button>
+          <div className="border-t border-gray-100 my-1" />
           <button
             onClick={() => {
               const project = projects.find((p) => p.id === contextMenu.projectId);

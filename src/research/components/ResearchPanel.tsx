@@ -7,10 +7,20 @@ import { SearchPapers } from './SearchPapers';
 import { PaperLibrary } from './PaperLibrary';
 import { PaperDetail } from './PaperDetail';
 import { ResearchProjects } from './ResearchProjects';
+import { PdfReader } from './PdfReader';
 import { useResearchStore } from '../store/researchStore';
 
 export const ResearchPanel: React.FC = () => {
-  const { currentView, selectedPaperId } = useResearchStore();
+  const { 
+    currentView, 
+    selectedPaperId, 
+    setCurrentView, 
+    getPaperById 
+  } = useResearchStore();
+
+  const handleClosePdfReader = () => {
+    setCurrentView('paper-detail');
+  };
 
   // Render based on current view
   switch (currentView) {
@@ -26,6 +36,19 @@ export const ResearchPanel: React.FC = () => {
     case 'paper-detail':
       if (selectedPaperId) {
         return <PaperDetail paperId={selectedPaperId} />;
+      }
+      return <SearchPapers />;
+    
+    case 'pdf-reader':
+      if (selectedPaperId) {
+        const paper = getPaperById(selectedPaperId);
+        return (
+          <PdfReader 
+            paperId={selectedPaperId} 
+            paper={paper}
+            onClose={handleClosePdfReader}
+          />
+        );
       }
       return <SearchPapers />;
     

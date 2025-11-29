@@ -55,7 +55,7 @@ export interface SearchResult {
 
 export type CitationFormat = 'apa' | 'mla' | 'chicago' | 'harvard' | 'bibtex' | 'ieee';
 
-export type ResearchView = 'search' | 'library' | 'projects' | 'paper-detail' | 'pdf-reader';
+export type ResearchView = 'search' | 'library' | 'projects' | 'paper-detail' | 'pdf-reader' | 'whiteboard';
 
 // PDF Storage Types
 export interface PdfStorage {
@@ -97,4 +97,83 @@ export interface PdfAnnotation {
   noteContent?: string; // user's note
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Whiteboard Types
+export interface WhiteboardComment {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WhiteboardNodeData {
+  label?: string;
+  color?: string;
+  fontSize?: 'small' | 'medium' | 'large';
+}
+
+export interface PaperNodeData extends WhiteboardNodeData {
+  paperId: string;
+  title: string;
+  authors: string[];
+  year: number;
+  doi?: string;
+  citationCount?: number;
+  comments: WhiteboardComment[];
+}
+
+export interface StickyNodeData extends WhiteboardNodeData {
+  content: string;
+  color: string;
+}
+
+export interface TextNodeData extends WhiteboardNodeData {
+  content: string;
+  fontSize: 'small' | 'medium' | 'large';
+  bold?: boolean;
+  italic?: boolean;
+}
+
+export interface ShapeNodeData extends WhiteboardNodeData {
+  shapeType: 'rectangle' | 'circle' | 'triangle';
+  fillColor: string;
+  borderColor: string;
+}
+
+export interface ImageNodeData extends WhiteboardNodeData {
+  imageUrl: string;
+  alt?: string;
+}
+
+export interface WhiteboardState {
+  id: string;
+  projectId: string;
+  nodes: WhiteboardNodeSerialized[];
+  edges: WhiteboardEdgeSerialized[];
+  viewport: { x: number; y: number; zoom: number };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WhiteboardNodeSerialized {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: WhiteboardNodeData | PaperNodeData | StickyNodeData | TextNodeData | ShapeNodeData | ImageNodeData;
+  width?: number;
+  height?: number;
+}
+
+export interface WhiteboardEdgeSerialized {
+  id: string;
+  source: string;
+  target: string;
+  type?: string;
+  label?: string;
+  style?: {
+    strokeDasharray?: string;
+    stroke?: string;
+  };
+  markerEnd?: string;
 }

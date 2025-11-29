@@ -19,7 +19,6 @@ import type { SearchFilters } from '../types/paper';
 import type { ApiSource } from '../services/paperSearchService';
 
 export const SearchPapers: React.FC = () => {
-  const [searchInput, setSearchInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFiltersState] = useState<SearchFilters>({});
   const [source, setSourceState] = useState<ApiSource>('semanticscholar');
@@ -30,7 +29,9 @@ export const SearchPapers: React.FC = () => {
     isLoading,
     error,
     hasMore,
+    query,
     search,
+    updateQuery,
     loadMore,
     setFilters,
     setSource,
@@ -40,14 +41,20 @@ export const SearchPapers: React.FC = () => {
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    search(searchInput);
-  }, [searchInput, search]);
+    search(query);
+  }, [query, search]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setSearchInput(value);
-    search(value);
-  }, [search]);
+    updateQuery(value);
+  }, [updateQuery]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      search(query);
+    }
+  }, [query, search]);
 
   const handleFilterChange = useCallback((key: keyof SearchFilters, value: unknown) => {
     const newFilters = { ...filters, [key]: value };
@@ -74,27 +81,41 @@ export const SearchPapers: React.FC = () => {
     <div className="flex flex-col h-full">
       {/* Search Header */}
       <div className="p-4 border-b border-gray-200 bg-white">
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search papers by title, author, keywords..."
-            value={searchInput}
-            onChange={handleInputChange}
-            className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-          />
-          {searchInput && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchInput('');
-                search('');
-              }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-gray-200 text-gray-400"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search papers by title, author, keywords..."
+              value={query}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  updateQuery('');
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-gray-200 text-gray-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading || !query.trim()}
+            className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
+            Search
+          </button>
         </form>
 
         {/* Filter toggle and source selector */}
@@ -225,7 +246,7 @@ export const SearchPapers: React.FC = () => {
         )}
 
         {/* Empty state */}
-        {!isLoading && !error && results.length === 0 && searchInput && (
+        {!isLoading && !error && results.length === 0 && query && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <FileText className="w-12 h-12 text-gray-300 mb-3" />
             <p className="text-sm text-gray-500 mb-1">No papers found</p>
@@ -236,12 +257,12 @@ export const SearchPapers: React.FC = () => {
         )}
 
         {/* Initial state */}
-        {!isLoading && !error && results.length === 0 && !searchInput && (
+        {!isLoading && !error && results.length === 0 && !query && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Search className="w-12 h-12 text-gray-300 mb-3" />
             <p className="text-sm text-gray-500 mb-1">Search for scientific papers</p>
             <p className="text-xs text-gray-400">
-              Enter keywords, author names, or DOIs to find papers
+              Enter keywords, author names, or DOIs and press Search or Enter
             </p>
           </div>
         )}

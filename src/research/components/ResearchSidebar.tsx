@@ -7,7 +7,6 @@ import {
   Search,
   Library,
   Folder,
-  ChevronDown,
   ChevronRight,
   FolderPlus,
   Beaker,
@@ -66,46 +65,78 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
     );
   }, [projects]);
 
+  // Project colors for visual indicators
+  const PROJECT_COLORS = [
+    'bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500', 
+    'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-yellow-500'
+  ];
+  
+  const getProjectColor = (projectId: string) => {
+    // Generate consistent color based on project ID
+    const hash = projectId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return PROJECT_COLORS[hash % PROJECT_COLORS.length];
+  };
+
   const renderProject = (project: ResearchProject, level: number = 0) => {
     const isExpanded = expandedProjectIds.has(project.id);
     const isSelected = selectedProjectId === project.id;
     const subProjects = getSubProjects(project.id);
     const paperCount = getProjectPapers(project.id).length;
+    const projectColor = getProjectColor(project.id);
 
     return (
-      <div key={project.id}>
+      <div key={project.id} className="transition-all duration-200">
         <div
           onClick={() => onProjectSelect(project.id)}
-          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-sm ${
+          className={`group flex items-center gap-2 mx-1 px-2 py-2 rounded-lg cursor-pointer transition-all duration-150 text-sm ${
             isSelected
-              ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-600 hover:bg-gray-100'
+              ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-100'
+              : 'text-gray-600 hover:bg-gray-50 hover:shadow-sm border border-transparent'
           }`}
-          style={{ paddingLeft: `${8 + level * 12}px` }}
+          style={{ marginLeft: `${4 + level * 12}px` }}
         >
+          {/* Expand/Collapse button */}
           {subProjects.length > 0 ? (
             <button
               onClick={(e) => toggleProjectExpansion(project.id, e)}
-              className="p-0.5 rounded hover:bg-gray-200"
+              className={`p-0.5 rounded transition-colors ${
+                isSelected ? 'hover:bg-blue-100' : 'hover:bg-gray-200'
+              }`}
             >
-              {isExpanded ? (
-                <ChevronDown className="w-3 h-3" />
-              ) : (
-                <ChevronRight className="w-3 h-3" />
-              )}
+              <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                isExpanded ? 'rotate-90' : ''
+              }`} />
             </button>
           ) : (
-            <span className="w-4" />
+            <span className="w-4.5" />
           )}
-          <Folder className="w-3.5 h-3.5" />
-          <span className="flex-1 truncate">{project.name}</span>
+          
+          {/* Color indicator */}
+          <div className={`w-2 h-2 rounded-full ${projectColor} flex-shrink-0`} />
+          
+          {/* Folder icon */}
+          <Folder className={`w-4 h-4 flex-shrink-0 ${
+            isSelected ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+          }`} />
+          
+          {/* Project name */}
+          <span className="flex-1 truncate font-medium">{project.name}</span>
+          
+          {/* Paper count badge */}
           {paperCount > 0 && (
-            <span className="text-xs text-gray-400">{paperCount}</span>
+            <span className={`px-1.5 py-0.5 text-xs rounded-full flex-shrink-0 ${
+              isSelected 
+                ? 'bg-blue-100 text-blue-600' 
+                : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
+            }`}>
+              {paperCount}
+            </span>
           )}
         </div>
         
+        {/* Sub-projects with smooth animation */}
         {isExpanded && subProjects.length > 0 && (
-          <div>
+          <div className="mt-0.5 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
             {subProjects.map((sub) => renderProject(sub, level + 1))}
           </div>
         )}
@@ -156,29 +187,29 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
       <div className="mt-2">
         <button
           onClick={toggleProjectsExpansion}
-          className="flex items-center gap-2 w-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 w-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors rounded-lg mx-1"
         >
-          {expandedProjects ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
+          <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${
+            expandedProjects ? 'rotate-90' : ''
+          }`} />
           <Folder className="w-4 h-4" />
           <span className="text-sm font-medium flex-1 text-left">Projects</span>
           {projects.length > 0 && (
-            <span className="text-xs text-gray-400">({projects.length})</span>
+            <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-500 rounded-full">
+              {projects.length}
+            </span>
           )}
         </button>
 
         {expandedProjects && (
-          <div className="ml-2 mt-1 space-y-0.5">
+          <div className="mt-1 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
             {rootProjects.map((project) => renderProject(project))}
             
             <button
               onClick={onProjectsClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              className="flex items-center gap-2 mx-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border border-dashed border-gray-200 hover:border-gray-300"
             >
-              <FolderPlus className="w-3.5 h-3.5" />
+              <FolderPlus className="w-4 h-4" />
               <span>Manage Projects</span>
             </button>
           </div>

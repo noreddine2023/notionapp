@@ -8,18 +8,25 @@ import { PaperLibrary } from './PaperLibrary';
 import { PaperDetail } from './PaperDetail';
 import { ResearchProjects } from './ResearchProjects';
 import { PdfReader } from './PdfReader';
+import { Whiteboard } from './whiteboard/Whiteboard';
 import { useResearchStore } from '../store/researchStore';
 
 export const ResearchPanel: React.FC = () => {
   const { 
     currentView, 
-    selectedPaperId, 
+    selectedPaperId,
+    selectedProjectId,
     setCurrentView, 
-    getPaperById 
+    getPaperById,
+    getProjectById,
   } = useResearchStore();
 
   const handleClosePdfReader = () => {
     setCurrentView('paper-detail');
+  };
+
+  const handleCloseWhiteboard = () => {
+    setCurrentView('projects');
   };
 
   // Render based on current view
@@ -51,6 +58,19 @@ export const ResearchPanel: React.FC = () => {
         );
       }
       return <SearchPapers />;
+    
+    case 'whiteboard':
+      if (selectedProjectId) {
+        const project = getProjectById(selectedProjectId);
+        return (
+          <Whiteboard
+            projectId={selectedProjectId}
+            projectName={project?.name || 'Untitled Project'}
+            onClose={handleCloseWhiteboard}
+          />
+        );
+      }
+      return <ResearchProjects />;
     
     default:
       return <SearchPapers />;

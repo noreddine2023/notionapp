@@ -15,6 +15,7 @@ export { AnnotationSidebar } from './components/AnnotationSidebar';
 export { AnnotationPanel } from './components/AnnotationPanel';
 export { AnnotationLayer } from './components/AnnotationLayer';
 export { HighlightPopover } from './components/HighlightPopover';
+export { Whiteboard } from './components/whiteboard/Whiteboard';
 
 // Store
 export { useResearchStore } from './store/researchStore';
@@ -28,6 +29,7 @@ export { paperSearchService } from './services/paperSearchService';
 export { citationService } from './services/citationService';
 export { pdfStorageService } from './services/pdfStorageService';
 export { pdfDownloadService } from './services/pdfDownloadService';
+export { whiteboardStorageService } from './services/whiteboardStorageService';
 
 // Types
 export type {
@@ -44,4 +46,14 @@ export type {
   AnnotationType,
   HighlightColor,
   AnnotationRect,
+  WhiteboardState,
+  WhiteboardNodeSerialized,
+  WhiteboardEdgeSerialized,
+  WhiteboardComment,
+  WhiteboardNodeData,
+  PaperNodeData,
+  StickyNodeData,
+  TextNodeData,
+  ShapeNodeData,
+  ImageNodeData,
 } from './types/paper';

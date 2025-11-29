@@ -40,13 +40,21 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
   return (
     <div 
-      className="absolute inset-0 pointer-events-none"
-      style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
+      className="absolute inset-0 pointer-events-none overflow-hidden"
+      style={{ 
+        // No transform - coordinates are already relative to the page
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }}
     >
       {annotations.map((annotation) => (
         <AnnotationItem
           key={annotation.id}
           annotation={annotation}
+          scale={scale}
           onClick={() => onAnnotationClick(annotation)}
         />
       ))}
@@ -56,11 +64,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
 interface AnnotationItemProps {
   annotation: PdfAnnotation;
+  scale: number;
   onClick: () => void;
 }
 
 const AnnotationItem: React.FC<AnnotationItemProps> = ({
   annotation,
+  scale,
   onClick,
 }) => {
   const [showTooltip, setShowTooltip] = React.useState(false);
@@ -75,10 +85,11 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
             key={`${annotation.id}-${index}`}
             className="absolute cursor-pointer pointer-events-auto transition-all group"
             style={{
-              left: rect.x,
-              top: rect.y,
-              width: rect.width,
-              height: rect.height,
+              // Apply scale to the stored coordinates
+              left: rect.x * scale,
+              top: rect.y * scale,
+              width: rect.width * scale,
+              height: rect.height * scale,
               backgroundColor: annotation.type === 'highlight' ? bgColor : 'transparent',
               borderBottom: annotation.type === 'underline' ? `2px solid ${borderColor}` : 'none',
               borderRadius: annotation.type === 'highlight' ? '2px' : '0',
@@ -113,8 +124,8 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
       <div
         className="absolute cursor-pointer pointer-events-auto"
         style={{
-          left: rect.x,
-          top: rect.y,
+          left: rect.x * scale,
+          top: rect.y * scale,
         }}
         onClick={onClick}
         onMouseEnter={() => setShowTooltip(true)}

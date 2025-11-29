@@ -16,7 +16,7 @@ import {
   X,
   Download,
   Highlighter,
-  Sidebar,
+  PanelRight,
   Search,
   Loader2,
   FileText,
@@ -25,7 +25,7 @@ import {
 import { pdfStorageService } from '../services/pdfStorageService';
 import { useResearchStore } from '../store/researchStore';
 import type { Paper, PdfAnnotation, HighlightColor } from '../types/paper';
-import { AnnotationSidebar } from './AnnotationSidebar';
+import { AnnotationPanel } from './AnnotationPanel';
 import { AnnotationLayer } from './AnnotationLayer';
 import { HighlightPopover } from './HighlightPopover';
 
@@ -74,9 +74,11 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     rects: Array<{ x: number; y: number; width: number; height: number }>;
     pageNumber: number;
   } | null>(null);
+  const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [highlightMode, setHighlightMode] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
   const pageInputRef = useRef<HTMLInputElement>(null);
 
   const { togglePaperRead } = useResearchStore();
@@ -277,32 +279,60 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) {
       setSelectedText(null);
+      setPopoverPosition(null);
       return;
     }
 
     const text = selection.toString().trim();
     if (!text) {
       setSelectedText(null);
+      setPopoverPosition(null);
       return;
     }
 
-    // Get selection rects
+    // Get the page container element to calculate relative positions
+    const pageContainer = pageContainerRef.current;
+    if (!pageContainer) {
+      setSelectedText(null);
+      setPopoverPosition(null);
+      return;
+    }
+
+    // Get the bounding rect of the page container
+    const pageRect = pageContainer.getBoundingClientRect();
+
+    // Get selection rects and convert to coordinates relative to the PDF page
     const range = selection.getRangeAt(0);
-    const rects = Array.from(range.getClientRects()).map(rect => ({
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
-    }));
+    const clientRects = Array.from(range.getClientRects());
+    
+    // Filter out empty rects and convert to page-relative coordinates
+    const rects = clientRects
+      .filter(rect => rect.width > 0 && rect.height > 0)
+      .map(rect => ({
+        // Convert to coordinates relative to the page container, accounting for scale
+        x: (rect.x - pageRect.x) / scale,
+        y: (rect.y - pageRect.y) / scale,
+        width: rect.width / scale,
+        height: rect.height / scale,
+      }));
 
     if (rects.length > 0) {
+      // Get the first rect's screen position for the popover
+      const firstClientRect = clientRects.find(r => r.width > 0 && r.height > 0);
+      if (firstClientRect) {
+        setPopoverPosition({
+          x: firstClientRect.x + firstClientRect.width / 2,
+          y: firstClientRect.y - 10,
+        });
+      }
+      
       setSelectedText({
         text,
         rects,
         pageNumber: currentPage,
       });
     }
-  }, [highlightMode, currentPage]);
+  }, [highlightMode, currentPage, scale]);
 
   // Create highlight
   const createHighlight = useCallback(async (noteContent?: string) => {
@@ -320,6 +350,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
     setAnnotations(prev => [...prev, annotation]);
     setSelectedText(null);
+    setPopoverPosition(null);
     window.getSelection()?.removeAllRanges();
   }, [selectedText, paperId, selectedColor]);
 
@@ -335,12 +366,6 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     if (updated) {
       setAnnotations(prev => prev.map(a => a.id === annotationId ? updated : a));
     }
-  }, []);
-
-  // Jump to annotation
-  const jumpToAnnotation = useCallback((annotation: PdfAnnotation) => {
-    setCurrentPage(annotation.pageNumber);
-    setShowSidebar(false);
   }, []);
 
   // Download PDF
@@ -565,9 +590,9 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
                 ? 'bg-blue-100 text-blue-700'
                 : isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
             }`}
-            title="Annotations sidebar"
+            title="Annotations panel"
           >
-            <Sidebar className="w-5 h-5" />
+            <PanelRight className="w-5 h-5" />
           </button>
           
           <div className="h-6 w-px bg-gray-300 mx-2" />
@@ -651,7 +676,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
                   </div>
                 }
               >
-                <div className="relative shadow-xl">
+                <div ref={pageContainerRef} className="relative shadow-xl">
                   <Page
                     pageNumber={currentPage}
                     scale={scale}
@@ -675,31 +700,34 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
           </div>
         </div>
 
-        {/* Annotations sidebar */}
+        {/* Annotations panel on the right */}
         {showSidebar && (
-          <AnnotationSidebar
+          <AnnotationPanel
             annotations={annotations}
-            onAnnotationClick={jumpToAnnotation}
+            currentPage={currentPage}
+            onClose={() => setShowSidebar(false)}
+            onNavigateToPage={(pageNumber) => {
+              setCurrentPage(pageNumber);
+            }}
             onDeleteAnnotation={deleteAnnotation}
             onUpdateAnnotation={updateAnnotation}
-            onExportAnnotations={() => pdfStorageService.exportAnnotationsAsMarkdown(paperId)}
             isDarkMode={isDarkMode}
           />
         )}
       </div>
 
       {/* Selection popover */}
-      {selectedText && (
+      {selectedText && popoverPosition && (
         <HighlightPopover
-          position={{
-            x: selectedText.rects[0].x + selectedText.rects[0].width / 2,
-            y: selectedText.rects[0].y - 10,
-          }}
+          position={popoverPosition}
           selectedColor={selectedColor}
           onHighlight={() => createHighlight()}
           onHighlightWithNote={(note) => createHighlight(note)}
           onColorChange={setSelectedColor}
-          onClose={() => setSelectedText(null)}
+          onClose={() => {
+            setSelectedText(null);
+            setPopoverPosition(null);
+          }}
         />
       )}
 

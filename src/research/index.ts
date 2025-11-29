@@ -12,6 +12,7 @@ export { PaperCard } from './components/PaperCard';
 export { ResearchProjects } from './components/ResearchProjects';
 export { PdfReader } from './components/PdfReader';
 export { AnnotationSidebar } from './components/AnnotationSidebar';
+export { AnnotationPanel } from './components/AnnotationPanel';
 export { AnnotationLayer } from './components/AnnotationLayer';
 export { HighlightPopover } from './components/HighlightPopover';
 

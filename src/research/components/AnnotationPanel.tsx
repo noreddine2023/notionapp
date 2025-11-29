@@ -294,11 +294,12 @@ const AnnotationCard: React.FC<AnnotationCardProps> = ({
 }) => {
   const colorInfo = COLOR_INFO[annotation.color];
   
-  const cardBgClass = isDarkMode ? 'bg-gray-750 hover:bg-gray-700' : 'bg-gray-50 hover:bg-gray-100';
+  const cardBgClass = isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100';
   const borderClass = isDarkMode ? 'border-gray-700' : 'border-gray-200';
   const textClass = isDarkMode ? 'text-gray-200' : 'text-gray-800';
   const mutedClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
   const inputBgClass = isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300';
+  const deleteHoverClass = isDarkMode ? 'hover:bg-red-900/30' : 'hover:bg-red-100';
 
   return (
     <div
@@ -325,7 +326,7 @@ const AnnotationCard: React.FC<AnnotationCardProps> = ({
             </button>
             <button
               onClick={onDeleteClick}
-              className={`p-1 rounded hover:bg-red-100 text-red-500`}
+              className={`p-1 rounded ${deleteHoverClass} text-red-500`}
               title="Delete"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -376,12 +377,21 @@ const AnnotationCard: React.FC<AnnotationCardProps> = ({
 
       {/* Delete confirmation */}
       {isDeleteConfirm && (
-        <div onClick={e => e.stopPropagation()} className="mt-2 p-2 bg-red-50 rounded border border-red-200">
-          <p className="text-xs text-red-700 mb-2">Delete this annotation?</p>
+        <div 
+          onClick={e => e.stopPropagation()} 
+          className={`mt-2 p-2 rounded border ${
+            isDarkMode 
+              ? 'bg-red-900/20 border-red-800' 
+              : 'bg-red-50 border-red-200'
+          }`}
+        >
+          <p className={`text-xs mb-2 ${isDarkMode ? 'text-red-400' : 'text-red-700'}`}>
+            Delete this annotation?
+          </p>
           <div className="flex justify-end gap-2">
             <button
               onClick={onCancelDelete}
-              className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800"
+              className={`px-2 py-1 text-xs ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'}`}
             >
               Cancel
             </button>

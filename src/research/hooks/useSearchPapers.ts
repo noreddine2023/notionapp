@@ -13,7 +13,9 @@ interface UseSearchPapersReturn {
   error: string | null;
   page: number;
   hasMore: boolean;
+  query: string;
   search: (query: string) => void;
+  updateQuery: (query: string) => void;
   loadMore: () => void;
   setFilters: (filters: SearchFilters) => void;
   setSource: (source: ApiSource) => void;
@@ -33,7 +35,6 @@ export function useSearchPapers(): UseSearchPapersReturn {
   const [source, setSourceState] = useState<ApiSource>('semanticscholar');
   
   const abortControllerRef = useRef<AbortController | null>(null);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const executeSearch = useCallback(async (
     searchQuery: string,
@@ -84,16 +85,15 @@ export function useSearchPapers(): UseSearchPapersReturn {
   const search = useCallback((newQuery: string) => {
     setQuery(newQuery);
     setPage(1);
-
-    // Debounce search
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      executeSearch(newQuery, 1, filters, source, false);
-    }, 300);
+    
+    // Execute search immediately (no debounce - triggered by button/Enter)
+    executeSearch(newQuery, 1, filters, source, false);
   }, [filters, source, executeSearch]);
+
+  // Update query without searching (for input onChange)
+  const updateQuery = useCallback((newQuery: string) => {
+    setQuery(newQuery);
+  }, []);
 
   const loadMore = useCallback(() => {
     const nextPage = page + 1;
@@ -124,9 +124,6 @@ export function useSearchPapers(): UseSearchPapersReturn {
   // Cleanup
   useEffect(() => {
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -142,7 +139,9 @@ export function useSearchPapers(): UseSearchPapersReturn {
     error,
     page,
     hasMore,
+    query,
     search,
+    updateQuery,
     loadMore,
     setFilters,
     setSource,

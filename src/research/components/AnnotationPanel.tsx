@@ -303,20 +303,20 @@ const AnnotationCard: React.FC<AnnotationCardProps> = ({
 
   return (
     <div
-      className={`mx-2 p-3 rounded-lg border ${borderClass} ${cardBgClass} cursor-pointer transition-colors`}
+      className={`mx-2 p-3 rounded-lg border ${borderClass} ${cardBgClass} cursor-pointer transition-colors overflow-hidden`}
       onClick={onNavigate}
     >
       {/* Header with color indicator and actions */}
       <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span title={colorInfo.label}>{colorInfo.emoji}</span>
-          <span className={`text-xs ${mutedClass}`}>
+        <div className="flex items-center gap-2 min-w-0 flex-shrink">
+          <span title={colorInfo.label} className="flex-shrink-0">{colorInfo.emoji}</span>
+          <span className={`text-xs ${mutedClass} truncate`}>
             {annotation.type.charAt(0).toUpperCase() + annotation.type.slice(1)}
           </span>
         </div>
         
         {!isDeleteConfirm && !isEditing && (
-          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
             <button
               onClick={onStartEdit}
               className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} ${mutedClass}`}
@@ -337,7 +337,7 @@ const AnnotationCard: React.FC<AnnotationCardProps> = ({
 
       {/* Highlighted text */}
       {annotation.textContent && (
-        <p className={`text-sm ${textClass} mb-2 line-clamp-3`}>
+        <p className={`text-sm ${textClass} mb-2 line-clamp-3 break-words overflow-hidden`}>
           "{annotation.textContent}"
         </p>
       )}
@@ -370,7 +370,7 @@ const AnnotationCard: React.FC<AnnotationCardProps> = ({
           </div>
         </div>
       ) : annotation.noteContent ? (
-        <div className={`mt-2 p-2 rounded text-xs ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} ${mutedClass}`}>
+        <div className={`mt-2 p-2 rounded text-xs ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} ${mutedClass} max-h-24 overflow-y-auto break-words`}>
           📝 {annotation.noteContent}
         </div>
       ) : null}

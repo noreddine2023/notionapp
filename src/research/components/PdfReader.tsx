@@ -21,6 +21,8 @@ import {
   Loader2,
   FileText,
   AlertCircle,
+  Hand,
+  MousePointer2,
 } from 'lucide-react';
 import { pdfStorageService } from '../services/pdfStorageService';
 import { useResearchStore } from '../store/researchStore';
@@ -40,6 +42,8 @@ interface PdfReaderProps {
   paper?: Paper;
   onClose: () => void;
 }
+
+type ToolMode = 'select' | 'hand' | 'highlight';
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
 const DEFAULT_ZOOM = 1;
@@ -75,11 +79,17 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     pageNumber: number;
   } | null>(null);
   const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null);
-  const [highlightMode, setHighlightMode] = useState<boolean>(false);
+  const [toolMode, setToolMode] = useState<ToolMode>('select');
+  const [isPanning, setIsPanning] = useState<boolean>(false);
+  const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
+
+  // For backwards compatibility
+  const highlightMode = toolMode === 'highlight';
 
   const containerRef = useRef<HTMLDivElement>(null);
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const pageInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const { togglePaperRead } = useResearchStore();
 
@@ -200,6 +210,14 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
             setShowSearch(prev => !prev);
           }
           break;
+        case 'h':
+        case 'H':
+          setToolMode('hand');
+          break;
+        case 'v':
+        case 'V':
+          setToolMode('select');
+          break;
       }
     };
 
@@ -272,10 +290,32 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     }
   }, []);
 
-  // Handle text selection for highlighting
-  const handleTextSelection = useCallback(() => {
-    if (!highlightMode) return;
+  // Handle panning
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (toolMode === 'hand') {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
+      e.preventDefault();
+    }
+  }, [toolMode]);
 
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isPanning && panStart && scrollContainerRef.current) {
+      const deltaX = panStart.x - e.clientX;
+      const deltaY = panStart.y - e.clientY;
+      scrollContainerRef.current.scrollLeft += deltaX;
+      scrollContainerRef.current.scrollTop += deltaY;
+      setPanStart({ x: e.clientX, y: e.clientY });
+    }
+  }, [isPanning, panStart]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+    setPanStart(null);
+  }, []);
+
+  // Handle text selection for highlighting
+  const handleTextSelection = useCallback(async () => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) {
       setSelectedText(null);
@@ -317,7 +357,24 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
       }));
 
     if (rects.length > 0) {
-      // Get the first rect's screen position for the popover
+      // If highlight mode is active, immediately create highlight
+      if (highlightMode) {
+        const annotation = await pdfStorageService.saveAnnotation({
+          paperId,
+          pageNumber: currentPage,
+          type: 'highlight',
+          color: selectedColor,
+          rects,
+          textContent: text,
+        });
+        setAnnotations(prev => [...prev, annotation]);
+        window.getSelection()?.removeAllRanges();
+        setSelectedText(null);
+        setPopoverPosition(null);
+        return;
+      }
+      
+      // If not in highlight mode, show popover for options
       const firstClientRect = clientRects.find(r => r.width > 0 && r.height > 0);
       if (firstClientRect) {
         setPopoverPosition({
@@ -332,7 +389,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
         pageNumber: currentPage,
       });
     }
-  }, [highlightMode, currentPage, scale]);
+  }, [highlightMode, currentPage, scale, paperId, selectedColor]);
 
   // Create highlight
   const createHighlight = useCallback(async (noteContent?: string) => {
@@ -526,12 +583,38 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
         {/* Right section - Tools */}
         <div className="flex items-center gap-2">
+          {/* Select tool */}
+          <button
+            onClick={() => setToolMode('select')}
+            className={`p-2 rounded-lg transition-colors ${
+              toolMode === 'select'
+                ? 'bg-blue-100 text-blue-700'
+                : isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
+            }`}
+            title="Select tool (V)"
+          >
+            <MousePointer2 className="w-5 h-5" />
+          </button>
+          
+          {/* Hand/Pan tool */}
+          <button
+            onClick={() => setToolMode('hand')}
+            className={`p-2 rounded-lg transition-colors ${
+              toolMode === 'hand'
+                ? 'bg-blue-100 text-blue-700'
+                : isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
+            }`}
+            title="Hand tool (H)"
+          >
+            <Hand className="w-5 h-5" />
+          </button>
+          
           {/* Highlight tool */}
           <div className="relative">
             <button
-              onClick={() => setHighlightMode(!highlightMode)}
+              onClick={() => setToolMode(toolMode === 'highlight' ? 'select' : 'highlight')}
               className={`p-2 rounded-lg transition-colors ${
-                highlightMode 
+                toolMode === 'highlight'
                   ? 'bg-yellow-100 text-yellow-700' 
                   : isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
               }`}
@@ -540,7 +623,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
               <Highlighter className="w-5 h-5" />
             </button>
             
-            {highlightMode && (
+            {toolMode === 'highlight' && (
               <button
                 onClick={() => setShowColorPicker(!showColorPicker)}
                 className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm`}
@@ -570,6 +653,8 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
               </div>
             )}
           </div>
+          
+          <div className="h-6 w-px bg-gray-300 mx-2" />
           
           <button
             onClick={() => setShowSearch(!showSearch)}
@@ -655,8 +740,18 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
       <div className="flex-1 flex overflow-hidden">
         {/* PDF viewer */}
         <div 
-          className="flex-1 overflow-auto"
-          onMouseUp={handleTextSelection}
+          ref={scrollContainerRef}
+          className={`flex-1 overflow-auto ${
+            toolMode === 'hand' 
+              ? isPanning ? 'cursor-grabbing' : 'cursor-grab'
+              : toolMode === 'highlight' 
+                ? 'cursor-crosshair' 
+                : 'cursor-text'
+          }`}
+          onMouseUp={toolMode !== 'hand' ? handleTextSelection : handleMouseUp}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseUp}
         >
           <div className="min-h-full flex items-start justify-center p-10">
             {pdfUrl && (
@@ -676,12 +771,12 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
                   </div>
                 }
               >
-                <div ref={pageContainerRef} className="relative shadow-xl">
+                <div ref={pageContainerRef} className="relative shadow-xl select-none">
                   <Page
                     pageNumber={currentPage}
                     scale={scale}
                     className={isDarkMode ? 'invert' : ''}
-                    renderTextLayer={true}
+                    renderTextLayer={toolMode !== 'hand'}
                     renderAnnotationLayer={true}
                   />
                   

@@ -68,6 +68,14 @@ async function getDB(): Promise<IDBPDatabase<ResearchDB>> {
 // ============= PDF Storage Operations =============
 
 /**
+ * Normalize paperId to ensure consistency
+ * Trims whitespace from the paperId
+ */
+function normalizePaperId(paperId: string): string {
+  return paperId.trim();
+}
+
+/**
  * Save PDF to IndexedDB
  */
 export async function savePdf(
@@ -76,9 +84,10 @@ export async function savePdf(
   fileName: string,
   source: 'api' | 'upload' = 'api'
 ): Promise<void> {
+  const normalizedId = normalizePaperId(paperId);
   const db = await getDB();
   const storage: PdfStorage = {
-    paperId,
+    paperId: normalizedId,
     pdfBlob,
     fileName,
     fileSize: pdfBlob.size,
@@ -92,8 +101,9 @@ export async function savePdf(
  * Get PDF from IndexedDB
  */
 export async function getPdf(paperId: string): Promise<Blob | null> {
+  const normalizedId = normalizePaperId(paperId);
   const db = await getDB();
-  const storage = await db.get(PDF_STORE, paperId);
+  const storage = await db.get(PDF_STORE, normalizedId);
   return storage?.pdfBlob || null;
 }
 
@@ -101,8 +111,9 @@ export async function getPdf(paperId: string): Promise<Blob | null> {
  * Get PDF storage info
  */
 export async function getPdfInfo(paperId: string): Promise<Omit<PdfStorage, 'pdfBlob'> | null> {
+  const normalizedId = normalizePaperId(paperId);
   const db = await getDB();
-  const storage = await db.get(PDF_STORE, paperId);
+  const storage = await db.get(PDF_STORE, normalizedId);
   if (!storage) return null;
   
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -114,17 +125,19 @@ export async function getPdfInfo(paperId: string): Promise<Omit<PdfStorage, 'pdf
  * Delete PDF from IndexedDB
  */
 export async function deletePdf(paperId: string): Promise<void> {
+  const normalizedId = normalizePaperId(paperId);
   const db = await getDB();
-  await db.delete(PDF_STORE, paperId);
+  await db.delete(PDF_STORE, normalizedId);
 }
 
 /**
  * Check if PDF exists locally
  */
 export async function hasLocalPdf(paperId: string): Promise<boolean> {
+  const normalizedId = normalizePaperId(paperId);
   const db = await getDB();
-  const storage = await db.get(PDF_STORE, paperId);
-  return !!storage;
+  const storage = await db.get(PDF_STORE, normalizedId);
+  return !!storage && !!storage.pdfBlob && storage.pdfBlob.size > 0;
 }
 
 /**

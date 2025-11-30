@@ -118,7 +118,14 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
 
   const handleDownloadPdf = async () => {
     if (paper?.pdfUrl) {
-      await pdfDownloadService.downloadPdf(paperId, paper.pdfUrl);
+      console.log('Starting PDF download for:', paperId);
+      const success = await pdfDownloadService.downloadPdf(paperId, paper.pdfUrl);
+      console.log('Download result:', success);
+      
+      // Verify the download
+      const hasPdf = await pdfStorageService.hasLocalPdf(paperId);
+      console.log('PDF saved to local storage:', hasPdf);
+      setHasLocalPdf(hasPdf);
     }
   };
 

@@ -111,22 +111,35 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
         const localBlob = await pdfStorageService.getPdf(paperId);
         
         if (localBlob && mounted) {
-          objectUrl = URL.createObjectURL(localBlob);
-          setPdfUrl(objectUrl);
-          setIsLoading(false);
-          return;
+          // Verify blob is valid
+          if (localBlob.size > 0) {
+            objectUrl = URL.createObjectURL(localBlob);
+            setPdfUrl(objectUrl);
+            setIsLoading(false);
+            return;
+          }
         }
 
-        // If paper has a URL, try to load directly
+        // If not local, check if paper has URL and try to download
         if (paper?.pdfUrl) {
-          // First try direct URL (might work for some sources)
-          setPdfUrl(paper.pdfUrl);
-          setIsLoading(false);
+          setIsLoading(true);
+          const success = await downloadPdf(paperId, paper.pdfUrl);
           
-          // Also attempt to download for offline access (non-blocking)
-          downloadPdf(paperId, paper.pdfUrl).catch(err => {
-            console.warn('Background PDF download failed:', err);
-          });
+          if (success && mounted) {
+            const blob = await pdfStorageService.getPdf(paperId);
+            if (blob && blob.size > 0) {
+              objectUrl = URL.createObjectURL(blob);
+              setPdfUrl(objectUrl);
+              setIsLoading(false);
+              return;
+            }
+          }
+          
+          // If download failed, still try the direct URL as fallback
+          if (mounted) {
+            setPdfUrl(paper.pdfUrl);
+            setIsLoading(false);
+          }
         } else {
           // No PDF available - show upload option
           setError('No PDF available for this paper');
@@ -480,20 +493,41 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     const file = event.target.files?.[0];
     if (!file) return;
     
+    // Validate file is a PDF
+    if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+      setError('Please upload a valid PDF file');
+      return;
+    }
+    
     setIsUploading(true);
+    setError(null);
+    
     try {
-      await pdfStorageService.savePdf(paperId, file, file.name, 'upload');
-      // Reload the PDF
-      const blob = await pdfStorageService.getPdf(paperId);
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        setPdfUrl(url);
-        setError(null);
+      // Read file as ArrayBuffer first to ensure it's valid
+      const arrayBuffer = await file.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+      
+      // Save to IndexedDB
+      await pdfStorageService.savePdf(paperId, blob, file.name, 'upload');
+      
+      // Verify save was successful
+      const savedBlob = await pdfStorageService.getPdf(paperId);
+      if (!savedBlob || savedBlob.size === 0) {
+        throw new Error('Failed to save PDF');
       }
+      
+      // Create object URL from the saved blob
+      const url = URL.createObjectURL(savedBlob);
+      setPdfUrl(url);
+      setError(null);
+      setIsLoading(false);
     } catch (err) {
       console.error('Upload failed:', err);
+      setError('Failed to upload PDF. Please try again.');
     } finally {
       setIsUploading(false);
+      // Reset file input
+      event.target.value = '';
     }
   }, [paperId]);
 
@@ -926,13 +960,25 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
                 }
               >
                 <div ref={pageContainerRef} className="relative shadow-xl select-text">
-                  <Page
-                    pageNumber={currentPage}
-                    scale={scale}
-                    className={isDarkMode ? 'invert' : ''}
-                    renderTextLayer={toolMode !== 'hand'}
-                    renderAnnotationLayer={true}
-                  />
+                  <div className={isDarkMode ? 'pdf-dark-mode' : ''} style={isDarkMode ? { filter: 'invert(0.85) hue-rotate(180deg)' } : undefined}>
+                    <Page
+                      pageNumber={currentPage}
+                      scale={scale}
+                      renderTextLayer={toolMode !== 'hand'}
+                      renderAnnotationLayer={true}
+                      loading={
+                        <div className="flex items-center justify-center h-96 w-96">
+                          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                        </div>
+                      }
+                      error={
+                        <div className="flex flex-col items-center justify-center h-96 w-96">
+                          <FileText className="w-12 h-12 text-gray-300 mb-4" />
+                          <p className="text-gray-500">Failed to load page</p>
+                        </div>
+                      }
+                    />
+                  </div>
                   
                   {/* Annotation layer overlay */}
                   <AnnotationLayer

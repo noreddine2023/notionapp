@@ -183,6 +183,12 @@ export async function downloadPdf(
         const name = fileName || extractFileName(pdfUrl, paperId);
         await pdfStorageService.savePdf(paperId, blob, name, 'api');
         
+        // Verify the save was successful
+        const saved = await pdfStorageService.hasLocalPdf(paperId);
+        if (!saved) {
+          throw new Error('Failed to save PDF to local storage');
+        }
+        
         notifyProgress({
           paperId,
           progress: 100,
@@ -230,12 +236,22 @@ export async function uploadPdf(
 ): Promise<boolean> {
   try {
     // Validate file type
-    if (!file.type.includes('pdf') && !file.name.endsWith('.pdf')) {
+    if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
       throw new Error('File is not a PDF');
     }
     
+    // Read file as ArrayBuffer first to ensure it's valid
+    const arrayBuffer = await file.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+    
     // Save to IndexedDB
-    await pdfStorageService.savePdf(paperId, file, file.name, 'upload');
+    await pdfStorageService.savePdf(paperId, blob, file.name, 'upload');
+    
+    // Verify the save was successful
+    const saved = await pdfStorageService.hasLocalPdf(paperId);
+    if (!saved) {
+      throw new Error('Failed to save PDF to local storage');
+    }
     
     notifyProgress({
       paperId,

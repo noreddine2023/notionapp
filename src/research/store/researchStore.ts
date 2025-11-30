@@ -16,6 +16,7 @@ interface ResearchStore {
   selectedProjectId: string | null;
   searchQuery: string;
   libraryFilter: 'all' | 'favorites' | 'unread';
+  viewedPaper: Paper | null; // Currently viewed paper (not necessarily in library)
 
   // Paper operations
   addPaperToLibrary: (paper: Paper) => void;
@@ -25,6 +26,7 @@ interface ResearchStore {
   togglePaperFavorite: (paperId: string) => void;
   setPaperNotes: (paperId: string, notes: string) => void;
   isPaperInLibrary: (paperId: string) => boolean;
+  setViewedPaper: (paper: Paper | null) => void;
 
   // Project operations
   createProject: (name: string, parentId?: string) => string;
@@ -70,6 +72,7 @@ export const useResearchStore = create<ResearchStore>()(
       selectedProjectId: null,
       searchQuery: '',
       libraryFilter: 'all',
+      viewedPaper: null,
 
       // Paper operations
       addPaperToLibrary: (paper) => {
@@ -123,6 +126,10 @@ export const useResearchStore = create<ResearchStore>()(
             p.id === paperId ? { ...p, personalNotes: notes } : p
           ),
         }));
+      },
+
+      setViewedPaper: (paper) => {
+        set({ viewedPaper: paper });
       },
 
       isPaperInLibrary: (paperId) => {
@@ -243,7 +250,13 @@ export const useResearchStore = create<ResearchStore>()(
       },
 
       getPaperById: (paperId) => {
-        return get().papers.find(p => p.id === paperId);
+        const state = get();
+        // First check library papers
+        const libraryPaper = state.papers.find(p => p.id === paperId);
+        if (libraryPaper) return libraryPaper;
+        // Fall back to currently viewed paper
+        if (state.viewedPaper?.id === paperId) return state.viewedPaper;
+        return undefined;
       },
 
       getProjectById: (projectId) => {
@@ -265,6 +278,16 @@ export const useResearchStore = create<ResearchStore>()(
           localStorage.removeItem(name);
         },
       },
+      // Don't persist viewedPaper as it's temporary
+      partialize: (state) => ({
+        papers: state.papers,
+        projects: state.projects,
+        currentView: state.currentView,
+        selectedPaperId: state.selectedPaperId,
+        selectedProjectId: state.selectedProjectId,
+        searchQuery: state.searchQuery,
+        libraryFilter: state.libraryFilter,
+      } as unknown as ResearchStore),
     }
   )
 );

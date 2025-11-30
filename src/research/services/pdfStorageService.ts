@@ -85,6 +85,8 @@ export async function savePdf(
   source: 'api' | 'upload' = 'api'
 ): Promise<void> {
   const normalizedId = normalizePaperId(paperId);
+  console.log('[pdfStorageService] Saving PDF with paperId:', normalizedId, 'size:', pdfBlob.size, 'source:', source);
+  
   const db = await getDB();
   const storage: PdfStorage = {
     paperId: normalizedId,
@@ -95,6 +97,14 @@ export async function savePdf(
     source,
   };
   await db.put(PDF_STORE, storage);
+  
+  // Verify the save was successful
+  const verification = await db.get(PDF_STORE, normalizedId);
+  console.log('[pdfStorageService] Verification - PDF saved:', !!verification, 'size:', verification?.fileSize);
+  
+  if (!verification) {
+    throw new Error('Failed to save PDF to storage');
+  }
 }
 
 /**
@@ -102,8 +112,12 @@ export async function savePdf(
  */
 export async function getPdf(paperId: string): Promise<Blob | null> {
   const normalizedId = normalizePaperId(paperId);
+  console.log('[pdfStorageService] Getting PDF with paperId:', normalizedId);
+  
   const db = await getDB();
   const storage = await db.get(PDF_STORE, normalizedId);
+  console.log('[pdfStorageService] Found PDF:', !!storage, 'size:', storage?.fileSize);
+  
   return storage?.pdfBlob || null;
 }
 
@@ -135,9 +149,14 @@ export async function deletePdf(paperId: string): Promise<void> {
  */
 export async function hasLocalPdf(paperId: string): Promise<boolean> {
   const normalizedId = normalizePaperId(paperId);
+  console.log('[pdfStorageService] Checking if PDF exists for paperId:', normalizedId);
+  
   const db = await getDB();
   const storage = await db.get(PDF_STORE, normalizedId);
-  return !!storage && !!storage.pdfBlob && storage.pdfBlob.size > 0;
+  const exists = !!storage && !!storage.pdfBlob && storage.pdfBlob.size > 0;
+  console.log('[pdfStorageService] PDF exists:', exists, 'size:', storage?.fileSize);
+  
+  return exists;
 }
 
 /**

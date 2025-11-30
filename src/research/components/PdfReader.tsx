@@ -103,30 +103,42 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     let objectUrl: string | null = null;
 
     async function loadPdf() {
+      if (!paperId) {
+        console.log('[PdfReader] No paperId provided');
+        setError('No paper ID provided');
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('[PdfReader] Loading PDF for paperId:', paperId, 'paper:', paper?.title);
       setIsLoading(true);
       setError(null);
 
       try {
         // First try to get from local storage
+        console.log('[PdfReader] Checking local storage for paperId:', paperId);
         const localBlob = await pdfStorageService.getPdf(paperId);
+        console.log('[PdfReader] Local blob found:', !!localBlob, 'size:', localBlob?.size);
         
-        if (localBlob && mounted) {
-          // Verify blob is valid
-          if (localBlob.size > 0) {
-            objectUrl = URL.createObjectURL(localBlob);
-            setPdfUrl(objectUrl);
-            setIsLoading(false);
-            return;
-          }
+        if (localBlob && localBlob.size > 0 && mounted) {
+          console.log('[PdfReader] Using local PDF blob');
+          objectUrl = URL.createObjectURL(localBlob);
+          console.log('[PdfReader] Created object URL:', objectUrl);
+          setPdfUrl(objectUrl);
+          setIsLoading(false);
+          return;
         }
 
         // If not local, check if paper has URL and try to download
         if (paper?.pdfUrl) {
+          console.log('[PdfReader] No local PDF, trying to download from:', paper.pdfUrl);
           setIsLoading(true);
           const success = await downloadPdf(paperId, paper.pdfUrl);
+          console.log('[PdfReader] Download result:', success);
           
           if (success && mounted) {
             const blob = await pdfStorageService.getPdf(paperId);
+            console.log('[PdfReader] Post-download blob found:', !!blob, 'size:', blob?.size);
             if (blob && blob.size > 0) {
               objectUrl = URL.createObjectURL(blob);
               setPdfUrl(objectUrl);
@@ -137,16 +149,18 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
           
           // If download failed, still try the direct URL as fallback
           if (mounted) {
+            console.log('[PdfReader] Download failed, trying direct URL as fallback');
             setPdfUrl(paper.pdfUrl);
             setIsLoading(false);
           }
         } else {
           // No PDF available - show upload option
+          console.log('[PdfReader] No PDF available for paperId:', paperId);
           setError('No PDF available for this paper');
           setIsLoading(false);
         }
       } catch (err) {
-        console.error('Failed to load PDF:', err);
+        console.error('[PdfReader] Failed to load PDF:', err);
         if (mounted) {
           setError('Failed to load PDF. You can try uploading a PDF file instead.');
           setIsLoading(false);

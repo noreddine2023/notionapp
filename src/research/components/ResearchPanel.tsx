@@ -49,6 +49,7 @@ export const ResearchPanel: React.FC = () => {
     case 'pdf-reader':
       if (selectedPaperId) {
         const paper = getPaperById(selectedPaperId);
+        console.log('[ResearchPanel] Rendering PdfReader with paperId:', selectedPaperId, 'paper:', paper?.title);
         return (
           <PdfReader 
             paperId={selectedPaperId} 

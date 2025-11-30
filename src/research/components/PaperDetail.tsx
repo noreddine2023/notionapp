@@ -69,10 +69,19 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
     projects,
     addPaperToProject,
     getPaperById,
+    setViewedPaper,
   } = useResearchStore();
 
   const isInLibrary = isPaperInLibrary(paperId);
   const libraryPaper = getPaperById(paperId);
+
+  // Store the currently viewed paper so it's available when transitioning to PDF reader
+  useEffect(() => {
+    if (paper) {
+      console.log('[PaperDetail] Setting viewed paper:', paper.id, paper.title);
+      setViewedPaper(paper);
+    }
+  }, [paper, setViewedPaper]);
 
   // Check for local PDF and reading progress
   useEffect(() => {

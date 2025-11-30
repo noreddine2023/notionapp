@@ -51,6 +51,10 @@ type ViewMode = 'pdf-js' | 'iframe' | 'google-viewer';
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
 const DEFAULT_ZOOM = 1;
 
+// CSS classes for iframe-based viewers
+const IFRAME_VIEWER_CLASS = "flex-1 w-full border-0 min-h-[80vh]";
+const IFRAME_WARNING_CLASS = "p-2 bg-yellow-50 text-yellow-700 text-sm text-center";
+
 const HIGHLIGHT_COLORS: { color: HighlightColor; label: string; bg: string; ring: string }[] = [
   { color: 'yellow', label: 'Yellow', bg: 'bg-yellow-400', ring: 'ring-yellow-500' },
   { color: 'green', label: 'Green', bg: 'bg-green-500', ring: 'ring-green-600' },
@@ -122,6 +126,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
         if (tempPdfUrl) {
           console.log('[PdfReader] Using temporary PDF URL from upload');
           setPdfUrl(tempPdfUrl);
+          // Track the object URL for cleanup
           objectUrl = tempPdfUrl;
           // Clear the temp URL after using it (it's now held in local state)
           setTempPdfUrl(null);
@@ -999,10 +1004,10 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
               <div className="w-full h-full flex flex-col">
                 <iframe
                   src={paper.pdfUrl}
-                  className="flex-1 w-full border-0 min-h-[80vh]"
+                  className={IFRAME_VIEWER_CLASS}
                   title="PDF Viewer"
                 />
-                <div className="p-2 bg-yellow-50 text-yellow-700 text-sm text-center">
+                <div className={IFRAME_WARNING_CLASS}>
                   Viewing in compatibility mode. Annotations are disabled.
                 </div>
               </div>
@@ -1013,11 +1018,11 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
               <div className="w-full h-full flex flex-col">
                 <iframe
                   src={`https://docs.google.com/viewer?url=${encodeURIComponent(paper.pdfUrl)}&embedded=true`}
-                  className="flex-1 w-full border-0 min-h-[80vh]"
+                  className={IFRAME_VIEWER_CLASS}
                   title="PDF Viewer (Google Docs)"
                 />
-                <div className="p-2 bg-yellow-50 text-yellow-700 text-sm text-center">
-                  Viewing via Google Docs. Annotations are disabled.
+                <div className={IFRAME_WARNING_CLASS}>
+                  Viewing via Google Docs. Annotations are disabled. Note: PDF content is processed by Google.
                 </div>
               </div>
             )}

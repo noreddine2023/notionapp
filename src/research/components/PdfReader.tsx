@@ -137,8 +137,8 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
           return;
         }
         
-        // Directly use the paper's PDF URL - try embedded view first for external URLs
-        // This avoids CORS issues with direct loading
+        // Use embedded iframe viewer for external PDFs to prevent CORS errors
+        // when loading from external domains
         if (paper?.pdfUrl) {
           console.log('[PdfReader] Using embedded viewer for external PDF URL:', paper.pdfUrl);
           setPdfUrl(paper.pdfUrl);
@@ -261,6 +261,13 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     setIsLoading(false);
   }, []);
 
+  // Helper function to switch to iframe mode as fallback
+  const switchToIframeMode = useCallback((reason: string) => {
+    console.log(`[PdfReader] ${reason}, switching to iframe mode`);
+    setViewMode('iframe');
+    setIsLoading(false);
+  }, []);
+
   const onDocumentLoadError = useCallback((err: Error) => {
     console.error('PDF load error:', err);
     // If this is an uploaded PDF, show the error since it's a local file issue
@@ -269,24 +276,18 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
       setIsLoading(false);
       return;
     }
-    // For external PDFs, fall back to iframe mode on CORS/network errors
-    if ((err.message.includes('Failed to fetch') || err.message.includes('CORS') || err.message.includes('network')) && paper?.pdfUrl) {
-      console.log('[PdfReader] CORS/fetch error, switching to iframe mode');
-      setViewMode('iframe');
-      setIsLoading(false);
-      return;
-    }
-    // For other errors with external PDFs, try iframe as fallback
+    // For external PDFs, fall back to iframe mode
     if (paper?.pdfUrl) {
-      console.log('[PdfReader] Error loading PDF, trying iframe mode as fallback');
-      setViewMode('iframe');
-      setIsLoading(false);
+      const isCorsOrNetworkError = err.message.includes('Failed to fetch') || 
+                                    err.message.includes('CORS') || 
+                                    err.message.includes('network');
+      switchToIframeMode(isCorsOrNetworkError ? 'CORS/network error' : 'Error loading PDF');
       return;
     }
     // No PDF URL and error - show error message
     setError('Failed to load PDF document. The file may be corrupted or inaccessible.');
     setIsLoading(false);
-  }, [paper?.pdfUrl, isUploadedPdf]);
+  }, [paper?.pdfUrl, isUploadedPdf, switchToIframeMode]);
 
   // Navigation
   const goToPage = useCallback((page: number) => {

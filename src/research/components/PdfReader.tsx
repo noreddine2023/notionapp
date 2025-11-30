@@ -20,11 +20,13 @@ import {
   Search,
   Loader2,
   FileText,
-  AlertCircle,
   Hand,
   MousePointer2,
+  Upload,
+  ExternalLink,
 } from 'lucide-react';
 import { pdfStorageService } from '../services/pdfStorageService';
+import { downloadPdf } from '../services/pdfDownloadService';
 import { useResearchStore } from '../store/researchStore';
 import type { Paper, PdfAnnotation, HighlightColor } from '../types/paper';
 import { AnnotationPanel } from './AnnotationPanel';
@@ -82,6 +84,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   const [toolMode, setToolMode] = useState<ToolMode>('select');
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   // For backwards compatibility
   const highlightMode = toolMode === 'highlight';
@@ -90,6 +93,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const pageInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { togglePaperRead } = useResearchStore();
 
@@ -113,18 +117,25 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
           return;
         }
 
-        // If not local and paper has URL, try to load directly
+        // If paper has a URL, try to load directly
         if (paper?.pdfUrl) {
+          // First try direct URL (might work for some sources)
           setPdfUrl(paper.pdfUrl);
           setIsLoading(false);
+          
+          // Also attempt to download for offline access (non-blocking)
+          downloadPdf(paperId, paper.pdfUrl).catch(err => {
+            console.warn('Background PDF download failed:', err);
+          });
         } else {
+          // No PDF available - show upload option
           setError('No PDF available for this paper');
           setIsLoading(false);
         }
       } catch (err) {
         console.error('Failed to load PDF:', err);
         if (mounted) {
-          setError('Failed to load PDF');
+          setError('Failed to load PDF. You can try uploading a PDF file instead.');
           setIsLoading(false);
         }
       }
@@ -233,7 +244,12 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
   const onDocumentLoadError = useCallback((err: Error) => {
     console.error('PDF load error:', err);
-    setError('Failed to load PDF document');
+    // Check if it's a CORS error
+    if (err.message.includes('Failed to fetch') || err.message.includes('CORS')) {
+      setError('Could not load PDF from remote URL due to access restrictions. Please upload the PDF manually.');
+    } else {
+      setError('Failed to load PDF document. The file may be corrupted or inaccessible.');
+    }
     setIsLoading(false);
   }, []);
 
@@ -459,6 +475,55 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     }
   }, [paperId, paper]);
 
+  // Upload PDF handler
+  const handleUploadPdf = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    try {
+      await pdfStorageService.savePdf(paperId, file, file.name, 'upload');
+      // Reload the PDF
+      const blob = await pdfStorageService.getPdf(paperId);
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [paperId]);
+
+  // Handle download from remote URL
+  const handleDownloadFromUrl = useCallback(async () => {
+    if (!paper?.pdfUrl) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const success = await downloadPdf(paperId, paper.pdfUrl);
+      if (success) {
+        const blob = await pdfStorageService.getPdf(paperId);
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          setPdfUrl(url);
+          setError(null);
+        }
+      } else {
+        setError('Download failed. Please try uploading the PDF manually.');
+      }
+    } catch (err) {
+      console.error('Download failed:', err);
+      setError('Download failed. Please try uploading the PDF manually.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [paperId, paper?.pdfUrl]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full bg-gray-100">
@@ -471,17 +536,91 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   }
 
   if (error) {
+    // Generate search URL based on DOI or title
+    const getSearchUrl = () => {
+      if (paper?.doi) {
+        return `https://doi.org/${paper.doi}`;
+      }
+      if (paper?.title) {
+        return `https://scholar.google.com/scholar?q=${encodeURIComponent(paper.title)}`;
+      }
+      return null;
+    };
+    
+    const searchUrl = getSearchUrl();
+    
     return (
       <div className="flex items-center justify-center h-full bg-gray-100">
-        <div className="text-center">
-          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-          >
-            Close
-          </button>
+        <div className="text-center max-w-md p-6 bg-white rounded-xl shadow-lg">
+          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">PDF Not Available</h2>
+          <p className="text-gray-600 mb-6">
+            {paper?.pdfUrl 
+              ? "The PDF hasn't been downloaded yet. Download it or upload your own copy."
+              : "No PDF URL found for this paper. You can upload your own PDF file."}
+          </p>
+          
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,application/pdf"
+            onChange={handleUploadPdf}
+            className="hidden"
+          />
+          
+          <div className="flex flex-col gap-3">
+            {/* Upload button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5" />
+                  <span>Upload PDF</span>
+                </>
+              )}
+            </button>
+            
+            {/* Download button - only show if paper has pdfUrl */}
+            {paper?.pdfUrl && (
+              <button
+                onClick={handleDownloadFromUrl}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+              >
+                <Download className="w-5 h-5" />
+                <span>Download PDF</span>
+              </button>
+            )}
+            
+            {/* Search/Find PDF link - only show if we have DOI or title */}
+            {searchUrl && (
+              <a
+                href={searchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <ExternalLink className="w-5 h-5" />
+                <span>{paper?.doi ? 'View on DOI.org' : 'Search on Google Scholar'}</span>
+              </a>
+            )}
+            
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="w-full px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     );

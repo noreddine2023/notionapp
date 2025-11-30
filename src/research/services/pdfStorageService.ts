@@ -98,11 +98,12 @@ export async function savePdf(
   };
   await db.put(PDF_STORE, storage);
   
-  // Verify the save was successful
+  // Verify the save was successful - check both record existence and blob validity
   const verification = await db.get(PDF_STORE, normalizedId);
-  console.log('[pdfStorageService] Verification - PDF saved:', !!verification, 'size:', verification?.fileSize);
+  const saveSuccess = !!verification && !!verification.pdfBlob && verification.pdfBlob.size > 0;
+  console.log('[pdfStorageService] Verification - PDF saved:', saveSuccess, 'size:', verification?.fileSize);
   
-  if (!verification) {
+  if (!saveSuccess) {
     throw new Error('Failed to save PDF to storage');
   }
 }

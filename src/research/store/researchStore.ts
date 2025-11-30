@@ -278,16 +278,6 @@ export const useResearchStore = create<ResearchStore>()(
           localStorage.removeItem(name);
         },
       },
-      // Don't persist viewedPaper as it's temporary
-      partialize: (state) => ({
-        papers: state.papers,
-        projects: state.projects,
-        currentView: state.currentView,
-        selectedPaperId: state.selectedPaperId,
-        selectedProjectId: state.selectedProjectId,
-        searchQuery: state.searchQuery,
-        libraryFilter: state.libraryFilter,
-      } as unknown as ResearchStore),
     }
   )
 );

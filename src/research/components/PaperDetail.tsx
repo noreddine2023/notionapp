@@ -81,7 +81,7 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
       console.log('[PaperDetail] Setting viewed paper:', paper.id, paper.title);
       setViewedPaper(paper);
     }
-  }, [paper, setViewedPaper]);
+  }, [paper]);
 
   // Check for local PDF and reading progress
   useEffect(() => {

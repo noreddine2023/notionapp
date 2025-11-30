@@ -99,17 +99,18 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
   // Load PDF
   useEffect(() => {
+    // Early return if no paperId - check before defining async function
+    if (!paperId) {
+      console.log('[PdfReader] No paperId provided');
+      setError('No paper ID provided');
+      setIsLoading(false);
+      return;
+    }
+
     let mounted = true;
     let objectUrl: string | null = null;
 
     async function loadPdf() {
-      if (!paperId) {
-        console.log('[PdfReader] No paperId provided');
-        setError('No paper ID provided');
-        setIsLoading(false);
-        return;
-      }
-      
       console.log('[PdfReader] Loading PDF for paperId:', paperId, 'paper:', paper?.title);
       setIsLoading(true);
       setError(null);

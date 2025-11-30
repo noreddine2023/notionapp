@@ -960,7 +960,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
                 }
               >
                 <div ref={pageContainerRef} className="relative shadow-xl select-text">
-                  <div className={isDarkMode ? 'pdf-dark-mode' : ''} style={isDarkMode ? { filter: 'invert(0.85) hue-rotate(180deg)' } : undefined}>
+                  <div style={isDarkMode ? { filter: 'invert(0.85) hue-rotate(180deg)' } : undefined}>
                     <Page
                       pageNumber={currentPage}
                       scale={scale}

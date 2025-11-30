@@ -69,7 +69,7 @@ async function getDB(): Promise<IDBPDatabase<ResearchDB>> {
 
 /**
  * Normalize paperId to ensure consistency
- * Removes any prefixes or special characters that might cause issues
+ * Trims whitespace from the paperId
  */
 function normalizePaperId(paperId: string): string {
   return paperId.trim();

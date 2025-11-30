@@ -20,17 +20,31 @@ export const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>)
     const file = e.target.files?.[0];
     if (!file || !onDataChange) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      return;
+    }
+
     setIsLoading(true);
     const reader = new FileReader();
     reader.onload = (event) => {
-      const imageUrl = event.target?.result as string;
-      onDataChange(id, { imageUrl, alt: file.name });
+      const result = event.target?.result;
+      // Validate result is a string (data URL)
+      if (typeof result === 'string' && result.startsWith('data:image/')) {
+        onDataChange(id, { imageUrl: result, alt: file.name });
+      }
       setIsLoading(false);
     };
     reader.onerror = () => {
       setIsLoading(false);
     };
     reader.readAsDataURL(file);
+  };
+
+  // Validate that the image URL is a safe data URL or empty
+  const isValidImageUrl = (url: string): boolean => {
+    if (!url) return false;
+    return url.startsWith('data:image/');
   };
 
   const handleRemoveImage = () => {
@@ -61,7 +75,7 @@ export const ImageNode = memo(({ id, data, selected }: NodeProps<ImageNodeData>)
           selected ? 'border-blue-400' : 'border-gray-200'
         }`}
       >
-        {data.imageUrl ? (
+        {isValidImageUrl(data.imageUrl) ? (
           <div className="relative w-full h-full">
             <img 
               src={data.imageUrl} 

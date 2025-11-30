@@ -68,6 +68,7 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
     addPaperToProject,
     getPaperById,
     setViewedPaper,
+    setTempPdfUrl,
   } = useResearchStore();
 
   const isInLibrary = isPaperInLibrary(paperId);
@@ -130,8 +131,9 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
       // Process the uploaded file (returns object URL, not stored locally)
       const objectUrl = await pdfDownloadService.uploadPdf(paperId, file);
       if (objectUrl) {
-        // Navigate to PDF reader - the uploaded file URL will need to be passed
-        // For now, just navigate and let the reader handle re-upload if needed
+        // Store the temporary URL so the PDF reader can access it
+        setTempPdfUrl(objectUrl);
+        // Navigate to PDF reader
         setCurrentView('pdf-reader');
       }
     } finally {
@@ -210,8 +212,8 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
         <div className="flex items-center gap-2 mb-3">
           {paper?.pdfUrl ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
-              <ExternalLink className="w-3 h-3" />
-              View PDF
+              <FileText className="w-3 h-3" />
+              PDF Available
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">

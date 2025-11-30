@@ -17,6 +17,7 @@ interface ResearchStore {
   searchQuery: string;
   libraryFilter: 'all' | 'favorites' | 'unread';
   viewedPaper: Paper | null; // Currently viewed paper (not necessarily in library)
+  tempPdfUrl: string | null; // Temporary PDF URL for uploaded files (session-only)
 
   // Paper operations
   addPaperToLibrary: (paper: Paper) => void;
@@ -27,6 +28,7 @@ interface ResearchStore {
   setPaperNotes: (paperId: string, notes: string) => void;
   isPaperInLibrary: (paperId: string) => boolean;
   setViewedPaper: (paper: Paper | null) => void;
+  setTempPdfUrl: (url: string | null) => void; // Set temporary PDF URL
 
   // Project operations
   createProject: (name: string, parentId?: string) => string;
@@ -73,6 +75,7 @@ export const useResearchStore = create<ResearchStore>()(
       searchQuery: '',
       libraryFilter: 'all',
       viewedPaper: null,
+      tempPdfUrl: null,
 
       // Paper operations
       addPaperToLibrary: (paper) => {
@@ -130,6 +133,10 @@ export const useResearchStore = create<ResearchStore>()(
 
       setViewedPaper: (paper) => {
         set({ viewedPaper: paper });
+      },
+
+      setTempPdfUrl: (url) => {
+        set({ tempPdfUrl: url });
       },
 
       isPaperInLibrary: (paperId) => {

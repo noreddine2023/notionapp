@@ -95,7 +95,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { togglePaperRead } = useResearchStore();
+  const { togglePaperRead, tempPdfUrl, setTempPdfUrl } = useResearchStore();
 
   // Load PDF - fetches directly from source URL (view-only, not stored locally)
   useEffect(() => {
@@ -116,6 +116,16 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
       setError(null);
 
       try {
+        // First check if there's a temporary PDF URL from upload
+        if (tempPdfUrl) {
+          console.log('[PdfReader] Using temporary PDF URL from upload');
+          setPdfUrl(tempPdfUrl);
+          // Clear the temp URL after using it (it's now held in local state)
+          setTempPdfUrl(null);
+          setIsLoading(false);
+          return;
+        }
+        
         // Directly use paper.pdfUrl for viewing (no local storage check)
         if (paper?.pdfUrl) {
           console.log('[PdfReader] Fetching PDF from URL:', paper.pdfUrl);
@@ -161,7 +171,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
         revokePdfObjectUrl(objectUrl);
       }
     };
-  }, [paperId, paper?.pdfUrl]);
+  }, [paperId, paper?.pdfUrl, tempPdfUrl, setTempPdfUrl]);
 
   // Load annotations
   useEffect(() => {

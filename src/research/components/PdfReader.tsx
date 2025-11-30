@@ -91,6 +91,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isUploadedPdf, setIsUploadedPdf] = useState<boolean>(false); // Track if PDF is from upload
 
   // For backwards compatibility
   const highlightMode = toolMode === 'highlight';
@@ -126,6 +127,8 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
         if (tempPdfUrl) {
           console.log('[PdfReader] Using temporary PDF URL from upload');
           setPdfUrl(tempPdfUrl);
+          setIsUploadedPdf(true); // Mark as uploaded PDF (use native viewer)
+          setViewMode('pdf-js'); // Uploaded PDFs always use native viewer
           // Track the object URL for cleanup
           objectUrl = tempPdfUrl;
           // Clear the temp URL after using it (it's now held in local state)
@@ -134,10 +137,13 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
           return;
         }
         
-        // Directly use the paper's PDF URL - let react-pdf handle it
+        // Directly use the paper's PDF URL - try embedded view first for external URLs
+        // This avoids CORS issues with direct loading
         if (paper?.pdfUrl) {
-          console.log('[PdfReader] Using direct PDF URL:', paper.pdfUrl);
+          console.log('[PdfReader] Using embedded viewer for external PDF URL:', paper.pdfUrl);
           setPdfUrl(paper.pdfUrl);
+          setIsUploadedPdf(false); // External PDF
+          setViewMode('iframe'); // Use embedded viewer for external PDFs to avoid CORS
           setIsLoading(false);
           return;
         }
@@ -257,17 +263,30 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
   const onDocumentLoadError = useCallback((err: Error) => {
     console.error('PDF load error:', err);
-    // Check if it's a CORS error or fetch error, and we have a URL to try in iframe mode
+    // If this is an uploaded PDF, show the error since it's a local file issue
+    if (isUploadedPdf) {
+      setError('Failed to load PDF document. The file may be corrupted.');
+      setIsLoading(false);
+      return;
+    }
+    // For external PDFs, fall back to iframe mode on CORS/network errors
     if ((err.message.includes('Failed to fetch') || err.message.includes('CORS') || err.message.includes('network')) && paper?.pdfUrl) {
       console.log('[PdfReader] CORS/fetch error, switching to iframe mode');
       setViewMode('iframe');
       setIsLoading(false);
       return;
     }
-    // For other errors, set the error state
+    // For other errors with external PDFs, try iframe as fallback
+    if (paper?.pdfUrl) {
+      console.log('[PdfReader] Error loading PDF, trying iframe mode as fallback');
+      setViewMode('iframe');
+      setIsLoading(false);
+      return;
+    }
+    // No PDF URL and error - show error message
     setError('Failed to load PDF document. The file may be corrupted or inaccessible.');
     setIsLoading(false);
-  }, [paper?.pdfUrl]);
+  }, [paper?.pdfUrl, isUploadedPdf]);
 
   // Navigation
   const goToPage = useCallback((page: number) => {
@@ -505,6 +524,8 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
       }
       
       setPdfUrl(objectUrl);
+      setIsUploadedPdf(true); // Mark as uploaded PDF
+      setViewMode('pdf-js'); // Uploaded PDFs use native viewer
       setError(null);
       setIsLoading(false);
     } catch (err) {

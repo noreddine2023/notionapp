@@ -26,7 +26,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { pdfStorageService } from '../services/pdfStorageService';
-import { downloadPdf, uploadPdf, revokePdfObjectUrl } from '../services/pdfDownloadService';
+import { uploadPdf, revokePdfObjectUrl } from '../services/pdfDownloadService';
 import { useResearchStore } from '../store/researchStore';
 import type { Paper, PdfAnnotation, HighlightColor } from '../types/paper';
 import { AnnotationPanel } from './AnnotationPanel';
@@ -46,6 +46,7 @@ interface PdfReaderProps {
 }
 
 type ToolMode = 'select' | 'hand' | 'highlight';
+type ViewMode = 'pdf-js' | 'iframe' | 'google-viewer';
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
 const DEFAULT_ZOOM = 1;
@@ -82,6 +83,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   } | null>(null);
   const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null);
   const [toolMode, setToolMode] = useState<ToolMode>('select');
+  const [viewMode, setViewMode] = useState<ViewMode>('pdf-js');
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -97,7 +99,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
   const { togglePaperRead, tempPdfUrl, setTempPdfUrl } = useResearchStore();
 
-  // Load PDF - fetches directly from source URL (view-only, not stored locally)
+  // Load PDF - directly use source URL (view-only, not stored locally)
   useEffect(() => {
     // Early return if no paperId - check before defining async function
     if (!paperId) {
@@ -120,44 +122,28 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
         if (tempPdfUrl) {
           console.log('[PdfReader] Using temporary PDF URL from upload');
           setPdfUrl(tempPdfUrl);
+          objectUrl = tempPdfUrl;
           // Clear the temp URL after using it (it's now held in local state)
           setTempPdfUrl(null);
           setIsLoading(false);
           return;
         }
         
-        // Directly use paper.pdfUrl for viewing (no local storage check)
+        // Directly use the paper's PDF URL - let react-pdf handle it
         if (paper?.pdfUrl) {
-          console.log('[PdfReader] Fetching PDF from URL:', paper.pdfUrl);
-          setIsLoading(true);
-          
-          // Fetch the PDF and get a temporary object URL for viewing
-          const fetchedUrl = await downloadPdf(paperId, paper.pdfUrl);
-          
-          if (fetchedUrl && mounted) {
-            console.log('[PdfReader] PDF fetched successfully, using object URL');
-            objectUrl = fetchedUrl;
-            setPdfUrl(objectUrl);
-            setIsLoading(false);
-            return;
-          }
-          
-          // If fetch failed with proxy, try direct URL as fallback
-          if (mounted) {
-            console.log('[PdfReader] Fetch failed, trying direct URL as fallback');
-            setPdfUrl(paper.pdfUrl);
-            setIsLoading(false);
-          }
-        } else {
-          // No PDF available - show upload option
-          console.log('[PdfReader] No PDF URL available for paperId:', paperId);
-          setError('No PDF available for this paper');
+          console.log('[PdfReader] Using direct PDF URL:', paper.pdfUrl);
+          setPdfUrl(paper.pdfUrl);
           setIsLoading(false);
+          return;
         }
+        
+        // No PDF URL available
+        setError('No PDF URL available for this paper');
+        setIsLoading(false);
       } catch (err) {
         console.error('[PdfReader] Failed to load PDF:', err);
         if (mounted) {
-          setError('Failed to load PDF. You can try uploading a PDF file instead.');
+          setError('Failed to load PDF');
           setIsLoading(false);
         }
       }
@@ -266,14 +252,17 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
   const onDocumentLoadError = useCallback((err: Error) => {
     console.error('PDF load error:', err);
-    // Check if it's a CORS error
-    if (err.message.includes('Failed to fetch') || err.message.includes('CORS')) {
-      setError('Could not load PDF from remote URL due to access restrictions. Please upload the PDF manually.');
-    } else {
-      setError('Failed to load PDF document. The file may be corrupted or inaccessible.');
+    // Check if it's a CORS error or fetch error, and we have a URL to try in iframe mode
+    if ((err.message.includes('Failed to fetch') || err.message.includes('CORS') || err.message.includes('network')) && paper?.pdfUrl) {
+      console.log('[PdfReader] CORS/fetch error, switching to iframe mode');
+      setViewMode('iframe');
+      setIsLoading(false);
+      return;
     }
+    // For other errors, set the error state
+    setError('Failed to load PDF document. The file may be corrupted or inaccessible.');
     setIsLoading(false);
-  }, []);
+  }, [paper?.pdfUrl]);
 
   // Navigation
   const goToPage = useCallback((page: number) => {
@@ -523,29 +512,14 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     }
   }, [paperId]);
 
-  // Handle download from remote URL - fetches PDF for viewing (not stored locally)
-  const handleDownloadFromUrl = useCallback(async () => {
+  // Handle trying to view PDF - switches to iframe mode as fallback
+  const handleTryViewPdf = useCallback(() => {
     if (!paper?.pdfUrl) return;
     
-    setIsLoading(true);
+    // Try switching to iframe mode to view the PDF
     setError(null);
-    
-    try {
-      const objectUrl = await downloadPdf(paperId, paper.pdfUrl);
-      if (objectUrl) {
-        setPdfUrl(objectUrl);
-        setError(null);
-      } else {
-        // If fetch failed, try direct URL as fallback
-        setPdfUrl(paper.pdfUrl);
-      }
-    } catch (err) {
-      console.error('Fetch failed:', err);
-      setError('Failed to fetch PDF. Please try uploading the PDF manually.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [paperId, paper?.pdfUrl]);
+    setViewMode('iframe');
+  }, [paper?.pdfUrl]);
 
   if (isLoading) {
     return (
@@ -615,11 +589,11 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
             {/* Download button - only show if paper has pdfUrl */}
             {paper?.pdfUrl && (
               <button
-                onClick={handleDownloadFromUrl}
+                onClick={handleTryViewPdf}
                 className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
               >
-                <Download className="w-5 h-5" />
-                <span>Download PDF</span>
+                <ExternalLink className="w-5 h-5" />
+                <span>Try Embedded Viewer</span>
               </button>
             )}
             
@@ -833,6 +807,43 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
           
           <div className="h-6 w-px bg-gray-300 mx-2" />
           
+          {/* View mode toggle */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setViewMode('pdf-js')}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                viewMode === 'pdf-js' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
+              }`}
+              title="Native viewer with annotations"
+            >
+              Native
+            </button>
+            <button
+              onClick={() => setViewMode('iframe')}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                viewMode === 'iframe' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
+              }`}
+              title="Embedded viewer"
+            >
+              Embed
+            </button>
+            <button
+              onClick={() => setViewMode('google-viewer')}
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                viewMode === 'google-viewer' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-600'
+              }`}
+              title="Google Docs viewer"
+            >
+              Google
+            </button>
+          </div>
+          
           <button
             onClick={() => setShowSearch(!showSearch)}
             className={`p-2 rounded-lg transition-colors ${
@@ -931,7 +942,8 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
           onMouseLeave={handleMouseUp}
         >
           <div className="min-h-full flex items-start justify-center p-10">
-            {pdfUrl && (
+            {/* Native PDF.js viewer */}
+            {viewMode === 'pdf-js' && pdfUrl && (
               <Document
                 file={pdfUrl}
                 onLoadSuccess={onDocumentLoadSuccess}
@@ -980,6 +992,34 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
                   />
                 </div>
               </Document>
+            )}
+            
+            {/* Iframe embedded viewer */}
+            {viewMode === 'iframe' && paper?.pdfUrl && (
+              <div className="w-full h-full flex flex-col">
+                <iframe
+                  src={paper.pdfUrl}
+                  className="flex-1 w-full border-0 min-h-[80vh]"
+                  title="PDF Viewer"
+                />
+                <div className="p-2 bg-yellow-50 text-yellow-700 text-sm text-center">
+                  Viewing in compatibility mode. Annotations are disabled.
+                </div>
+              </div>
+            )}
+            
+            {/* Google Docs viewer */}
+            {viewMode === 'google-viewer' && paper?.pdfUrl && (
+              <div className="w-full h-full flex flex-col">
+                <iframe
+                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(paper.pdfUrl)}&embedded=true`}
+                  className="flex-1 w-full border-0 min-h-[80vh]"
+                  title="PDF Viewer (Google Docs)"
+                />
+                <div className="p-2 bg-yellow-50 text-yellow-700 text-sm text-center">
+                  Viewing via Google Docs. Annotations are disabled.
+                </div>
+              </div>
             )}
           </div>
         </div>

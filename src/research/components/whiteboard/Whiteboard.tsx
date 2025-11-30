@@ -22,6 +22,7 @@ import { PaperNode } from './nodes/PaperNode';
 import { StickyNode } from './nodes/StickyNode';
 import { TextNode } from './nodes/TextNode';
 import { ShapeNode } from './nodes/ShapeNode';
+import { ImageNode } from './nodes/ImageNode';
 import { WhiteboardToolbar, WhiteboardTool } from './WhiteboardToolbar';
 import { PaperSelector } from './PaperSelector';
 import { whiteboardStorageService } from '../../services/whiteboardStorageService';
@@ -34,6 +35,7 @@ import type {
   StickyNodeData,
   TextNodeData,
   ShapeNodeData,
+  ImageNodeData,
   Paper,
 } from '../../types/paper';
 
@@ -64,6 +66,7 @@ const nodeTypes = {
   sticky: StickyNode,
   text: TextNode,
   shape: ShapeNode,
+  image: ImageNode,
 };
 
 interface WhiteboardProps {
@@ -285,6 +288,15 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
           style: { width: 200, height: 150 },
         };
         break;
+      case 'image':
+        newNode = {
+          id,
+          type: 'image',
+          position,
+          data: { imageUrl: '', alt: '' } as ImageNodeData,
+          style: { width: 200, height: 200 },
+        };
+        break;
       case 'rectangle':
         newNode = {
           id,
@@ -402,6 +414,7 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
       if (e.key === 'h' || e.key === 'H') setActiveTool('pan');
       if (e.key === 't' || e.key === 'T') setActiveTool('text');
       if (e.key === 'n' || e.key === 'N') setActiveTool('sticky');
+      if (e.key === 'i' || e.key === 'I') setActiveTool('image');
       if (e.key === 'r' || e.key === 'R') setActiveTool('rectangle');
       if (e.key === 'c' || e.key === 'C') setActiveTool('circle');
       if (e.key === 'a' || e.key === 'A') setActiveTool('arrow');
@@ -495,6 +508,7 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
                   case 'sticky': return '#FCD34D';
                   case 'text': return '#6B7280';
                   case 'shape': return '#10B981';
+                  case 'image': return '#EC4899';
                   default: return '#9CA3AF';
                 }
               }}

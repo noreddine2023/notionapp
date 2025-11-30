@@ -8,6 +8,7 @@ import {
   Hand,
   Type,
   StickyNote,
+  ImageIcon,
   Square,
   Circle,
   Triangle,
@@ -29,6 +30,7 @@ export type WhiteboardTool =
   | 'pan' 
   | 'text' 
   | 'sticky' 
+  | 'image'
   | 'rectangle' 
   | 'circle' 
   | 'triangle'
@@ -133,6 +135,12 @@ export const WhiteboardToolbar = memo(({
         label="Sticky Note (N)"
         isActive={activeTool === 'sticky'}
         onClick={() => onToolChange('sticky')}
+      />
+      <ToolButton
+        icon={<ImageIcon className="w-5 h-5" />}
+        label="Image (I)"
+        isActive={activeTool === 'image'}
+        onClick={() => onToolChange('image')}
       />
       <ToolButton
         icon={<FileText className="w-5 h-5" />}

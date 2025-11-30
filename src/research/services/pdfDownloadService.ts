@@ -91,9 +91,12 @@ export async function downloadPdf(
   fileName?: string,
   maxRetries: number = 2
 ): Promise<boolean> {
+  console.log('[pdfDownloadService] Starting download for paperId:', paperId, 'from:', pdfUrl);
+  
   // Check if already downloaded
   const hasLocal = await pdfStorageService.hasLocalPdf(paperId);
   if (hasLocal) {
+    console.log('[pdfDownloadService] PDF already exists locally for paperId:', paperId);
     notifyProgress({
       paperId,
       progress: 100,
@@ -105,6 +108,7 @@ export async function downloadPdf(
   // Check if already downloading
   const existing = activeDownloads.get(paperId);
   if (existing && existing.status === 'downloading') {
+    console.log('[pdfDownloadService] Download already in progress for paperId:', paperId);
     return false;
   }
   
@@ -181,14 +185,17 @@ export async function downloadPdf(
         
         // Save to IndexedDB
         const name = fileName || extractFileName(pdfUrl, paperId);
+        console.log('[pdfDownloadService] Saving PDF to storage, paperId:', paperId, 'fileName:', name, 'blobSize:', blob.size);
         await pdfStorageService.savePdf(paperId, blob, name, 'api');
         
         // Verify the save was successful
         const saved = await pdfStorageService.hasLocalPdf(paperId);
+        console.log('[pdfDownloadService] PDF save verification for paperId:', paperId, 'saved:', saved);
         if (!saved) {
           throw new Error('Failed to save PDF to local storage');
         }
         
+        console.log('[pdfDownloadService] PDF successfully downloaded and saved for paperId:', paperId);
         notifyProgress({
           paperId,
           progress: 100,
@@ -198,7 +205,7 @@ export async function downloadPdf(
         return true;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Download failed');
-        console.warn(`PDF download attempt ${attempt + 1}/${fetchAttempts.length}, retry ${retry + 1}/${maxRetries + 1} failed:`, lastError.message);
+        console.warn(`[pdfDownloadService] PDF download attempt ${attempt + 1}/${fetchAttempts.length}, retry ${retry + 1}/${maxRetries + 1} failed:`, lastError.message);
         
         // If not a network error, don't retry
         if (lastError.message.includes('HTTP error')) {
@@ -215,7 +222,7 @@ export async function downloadPdf(
   
   // All attempts failed
   const errorMessage = lastError?.message || 'Download failed after all attempts';
-  console.error('PDF download error:', errorMessage);
+  console.error('[pdfDownloadService] PDF download failed for paperId:', paperId, 'error:', errorMessage);
   
   notifyProgress({
     paperId,

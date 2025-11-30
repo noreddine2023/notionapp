@@ -1,9 +1,10 @@
 /**
  * PDF Download Service
- * Downloads PDFs from various sources and saves them locally
+ * Fetches PDFs from various sources for view-only display (not stored locally)
  */
 
-import { pdfStorageService } from './pdfStorageService';
+// Removed: import { pdfStorageService } from './pdfStorageService';
+// PDFs are no longer stored locally - only viewed
 
 export interface DownloadProgress {
   paperId: string;
@@ -83,33 +84,23 @@ async function fetchWithProxy(url: string, proxyUrl?: string): Promise<Response>
 }
 
 /**
- * Download PDF from URL with progress tracking
+ * Fetch PDF from URL and return a temporary object URL for viewing
+ * PDFs are NOT stored locally - they are fetched fresh each time
+ * @returns Object URL for the PDF blob, or null if fetch failed
  */
 export async function downloadPdf(
   paperId: string,
   pdfUrl: string,
-  fileName?: string,
+  _fileName?: string,
   maxRetries: number = 2
-): Promise<boolean> {
-  console.log('[pdfDownloadService] Starting download for paperId:', paperId, 'from:', pdfUrl);
-  
-  // Check if already downloaded
-  const hasLocal = await pdfStorageService.hasLocalPdf(paperId);
-  if (hasLocal) {
-    console.log('[pdfDownloadService] PDF already exists locally for paperId:', paperId);
-    notifyProgress({
-      paperId,
-      progress: 100,
-      status: 'completed',
-    });
-    return true;
-  }
+): Promise<string | null> {
+  console.log('[pdfDownloadService] Fetching PDF for viewing, paperId:', paperId, 'from:', pdfUrl);
   
   // Check if already downloading
   const existing = activeDownloads.get(paperId);
   if (existing && existing.status === 'downloading') {
-    console.log('[pdfDownloadService] Download already in progress for paperId:', paperId);
-    return false;
+    console.log('[pdfDownloadService] Fetch already in progress for paperId:', paperId);
+    return null;
   }
   
   notifyProgress({
@@ -160,7 +151,7 @@ export async function downloadPdf(
             const progress = Math.round((receivedBytes / totalBytes) * 100);
             notifyProgress({
               paperId,
-              progress: Math.min(progress, 99), // Keep at 99 until saved
+              progress: Math.min(progress, 99), // Keep at 99 until complete
               status: 'downloading',
             });
           }
@@ -183,29 +174,20 @@ export async function downloadPdf(
           throw new Error('Downloaded file is not a valid PDF');
         }
         
-        // Save to IndexedDB
-        const name = fileName || extractFileName(pdfUrl, paperId);
-        console.log('[pdfDownloadService] Saving PDF to storage, paperId:', paperId, 'fileName:', name, 'blobSize:', blob.size);
-        await pdfStorageService.savePdf(paperId, blob, name, 'api');
+        // Create object URL for viewing (not stored locally)
+        const objectUrl = URL.createObjectURL(blob);
         
-        // Verify the save was successful
-        const saved = await pdfStorageService.hasLocalPdf(paperId);
-        console.log('[pdfDownloadService] PDF save verification for paperId:', paperId, 'saved:', saved);
-        if (!saved) {
-          throw new Error('Failed to save PDF to local storage');
-        }
-        
-        console.log('[pdfDownloadService] PDF successfully downloaded and saved for paperId:', paperId);
+        console.log('[pdfDownloadService] PDF fetched successfully for viewing, paperId:', paperId);
         notifyProgress({
           paperId,
           progress: 100,
           status: 'completed',
         });
         
-        return true;
+        return objectUrl;
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error('Download failed');
-        console.warn(`[pdfDownloadService] PDF download attempt ${attempt + 1}/${fetchAttempts.length}, retry ${retry + 1}/${maxRetries + 1} failed:`, lastError.message);
+        lastError = error instanceof Error ? error : new Error('Fetch failed');
+        console.warn(`[pdfDownloadService] PDF fetch attempt ${attempt + 1}/${fetchAttempts.length}, retry ${retry + 1}/${maxRetries + 1} failed:`, lastError.message);
         
         // If not a network error, don't retry
         if (lastError.message.includes('HTTP error')) {
@@ -221,8 +203,8 @@ export async function downloadPdf(
   }
   
   // All attempts failed
-  const errorMessage = lastError?.message || 'Download failed after all attempts';
-  console.error('[pdfDownloadService] PDF download failed for paperId:', paperId, 'error:', errorMessage);
+  const errorMessage = lastError?.message || 'Fetch failed after all attempts';
+  console.error('[pdfDownloadService] PDF fetch failed for paperId:', paperId, 'error:', errorMessage);
   
   notifyProgress({
     paperId,
@@ -231,16 +213,19 @@ export async function downloadPdf(
     error: errorMessage,
   });
   
-  return false;
+  return null;
 }
 
 /**
- * Upload PDF file
+ * Process uploaded PDF file and return object URL for viewing
+ * Note: Uploaded PDFs are NOT stored locally - they exist only for the current session
+ * If the user refreshes or closes, they will need to re-upload the PDF
+ * @returns Object URL for the PDF blob, or null if processing failed
  */
 export async function uploadPdf(
   paperId: string,
   file: File
-): Promise<boolean> {
+): Promise<string | null> {
   try {
     // Validate file type
     if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
@@ -251,14 +236,8 @@ export async function uploadPdf(
     const arrayBuffer = await file.arrayBuffer();
     const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
     
-    // Save to IndexedDB
-    await pdfStorageService.savePdf(paperId, blob, file.name, 'upload');
-    
-    // Verify the save was successful
-    const saved = await pdfStorageService.hasLocalPdf(paperId);
-    if (!saved) {
-      throw new Error('Failed to save PDF to local storage');
-    }
+    // Create object URL for viewing (not stored locally)
+    const objectUrl = URL.createObjectURL(blob);
     
     notifyProgress({
       paperId,
@@ -266,7 +245,7 @@ export async function uploadPdf(
       status: 'completed',
     });
     
-    return true;
+    return objectUrl;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Upload failed';
     console.error('PDF upload error:', error);
@@ -278,7 +257,7 @@ export async function uploadPdf(
       error: errorMessage,
     });
     
-    return false;
+    return null;
   }
 }
 
@@ -307,31 +286,12 @@ export function clearDownloadStatus(paperId: string): void {
 }
 
 /**
- * Extract filename from URL
- */
-function extractFileName(url: string, fallbackId: string): string {
-  try {
-    const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split('/');
-    const lastPart = pathParts[pathParts.length - 1];
-    
-    if (lastPart && lastPart.endsWith('.pdf')) {
-      return lastPart;
-    }
-  } catch {
-    // URL parsing failed
-  }
-  
-  return `${fallbackId}.pdf`;
-}
-
-/**
+ * @deprecated No longer used - PDF blobs are not stored locally
  * Create object URL for PDF blob
  */
-export async function getPdfObjectUrl(paperId: string): Promise<string | null> {
-  const blob = await pdfStorageService.getPdf(paperId);
-  if (!blob) return null;
-  return URL.createObjectURL(blob);
+export async function getPdfObjectUrl(_paperId: string): Promise<string | null> {
+  console.log('[pdfDownloadService] getPdfObjectUrl is deprecated - use downloadPdf() which returns object URL directly');
+  return null;
 }
 
 /**

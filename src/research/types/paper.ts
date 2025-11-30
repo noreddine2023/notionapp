@@ -26,7 +26,8 @@ export interface Paper {
   personalNotes?: string;
   references?: string[]; // IDs of papers this paper cites
   citedBy?: string[]; // IDs of papers that cite this paper
-  hasLocalPdf?: boolean; // Whether PDF is stored locally
+  /** @deprecated PDFs are no longer stored locally. Use pdfUrl for viewing. */
+  hasLocalPdf?: boolean;
 }
 
 export interface ResearchProject {
@@ -58,6 +59,10 @@ export type CitationFormat = 'apa' | 'mla' | 'chicago' | 'harvard' | 'bibtex' | 
 export type ResearchView = 'search' | 'library' | 'projects' | 'paper-detail' | 'pdf-reader' | 'whiteboard';
 
 // PDF Storage Types
+/**
+ * @deprecated PDF blobs are no longer stored locally. PDFs are fetched directly from source URLs.
+ * Only annotation and reading progress data is persisted.
+ */
 export interface PdfStorage {
   paperId: string;
   pdfBlob: Blob;

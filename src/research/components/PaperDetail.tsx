@@ -19,9 +19,7 @@ import {
   Users,
   Loader2,
   ChevronDown,
-  Download,
   Upload,
-  HardDrive,
 } from 'lucide-react';
 import { usePaperDetails } from '../hooks/usePaperDetails';
 import { useResearchStore } from '../store/researchStore';
@@ -50,7 +48,7 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
   const [showAddToProject, setShowAddToProject] = useState(false);
   const [personalNotes, setPersonalNotes] = useState('');
   const [showFullAbstract, setShowFullAbstract] = useState(false);
-  const [hasLocalPdf, setHasLocalPdf] = useState(false);
+  const [hasAnnotations, setHasAnnotations] = useState(false);
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -70,6 +68,7 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
     addPaperToProject,
     getPaperById,
     setViewedPaper,
+    setTempPdfUrl,
   } = useResearchStore();
 
   const isInLibrary = isPaperInLibrary(paperId);
@@ -83,16 +82,16 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
     }
   }, [paper]);
 
-  // Check for local PDF and reading progress
+  // Check for annotations and reading progress (PDFs are no longer stored locally)
   useEffect(() => {
     async function checkPdfStatus() {
-      const hasPdf = await pdfStorageService.hasLocalPdf(paperId);
-      setHasLocalPdf(hasPdf);
+      // Check if paper has any annotations
+      const hasAnns = await pdfStorageService.hasAnnotations(paperId);
+      setHasAnnotations(hasAnns);
       
-      if (hasPdf) {
-        const progress = await pdfStorageService.getReadingProgress(paperId);
-        setReadingProgress(progress);
-      }
+      // Check reading progress
+      const progress = await pdfStorageService.getReadingProgress(paperId);
+      setReadingProgress(progress);
     }
     checkPdfStatus();
   }, [paperId]);
@@ -102,9 +101,7 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
     const unsubscribe = onDownloadProgress((progress) => {
       if (progress.paperId === paperId) {
         setDownloadProgress(progress);
-        if (progress.status === 'completed') {
-          setHasLocalPdf(true);
-        }
+        // Note: PDFs are no longer stored locally, so no need to set hasLocalPdf
       }
     });
     return unsubscribe;
@@ -125,27 +122,20 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
     setCurrentView('pdf-reader');
   };
 
-  const handleDownloadPdf = async () => {
-    if (paper?.pdfUrl) {
-      console.log('Starting PDF download for:', paperId);
-      const success = await pdfDownloadService.downloadPdf(paperId, paper.pdfUrl);
-      console.log('Download result:', success);
-      
-      // Verify the download
-      const hasPdf = await pdfStorageService.hasLocalPdf(paperId);
-      console.log('PDF saved to local storage:', hasPdf);
-      setHasLocalPdf(hasPdf);
-    }
-  };
-
   const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
     try {
-      await pdfDownloadService.uploadPdf(paperId, file);
-      setHasLocalPdf(true);
+      // Process the uploaded file (returns object URL, not stored locally)
+      const objectUrl = await pdfDownloadService.uploadPdf(paperId, file);
+      if (objectUrl) {
+        // Store the temporary URL so the PDF reader can access it
+        setTempPdfUrl(objectUrl);
+        // Navigate to PDF reader
+        setCurrentView('pdf-reader');
+      }
     } finally {
       setIsUploading(false);
     }
@@ -220,18 +210,20 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
 
         {/* PDF Status Badge */}
         <div className="flex items-center gap-2 mb-3">
-          {hasLocalPdf ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700">
-              <HardDrive className="w-3 h-3" />
-              PDF Available
-            </span>
-          ) : paper?.pdfUrl ? (
+          {paper?.pdfUrl ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
-              PDF Online
+              <FileText className="w-3 h-3" />
+              PDF Available
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
               No PDF
+            </span>
+          )}
+          
+          {hasAnnotations && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700">
+              Has Annotations
             </span>
           )}
           
@@ -245,31 +237,23 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
 
         {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          {/* Read Paper Button */}
-          {hasLocalPdf ? (
-            <button
-              onClick={handleReadPaper}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <BookOpen className="w-4 h-4" />
-              Read Paper
-            </button>
-          ) : paper?.pdfUrl ? (
+          {/* View/Read Paper Button - available if paper has PDF URL */}
+          {paper?.pdfUrl ? (
             downloadProgress?.status === 'downloading' ? (
               <button
                 disabled
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 rounded-md"
               >
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Downloading... {downloadProgress.progress}%
+                Loading... {downloadProgress.progress}%
               </button>
             ) : (
               <button
-                onClick={handleDownloadPdf}
+                onClick={handleReadPaper}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                <Download className="w-4 h-4" />
-                Download PDF
+                <BookOpen className="w-4 h-4" />
+                View PDF
               </button>
             )
           ) : null}
@@ -465,8 +449,8 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              <Download className="w-4 h-4" />
-              View PDF
+              <ExternalLink className="w-4 h-4" />
+              Open PDF
             </a>
           )}
           {paper.doi && (

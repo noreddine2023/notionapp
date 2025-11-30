@@ -26,7 +26,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { pdfStorageService } from '../services/pdfStorageService';
-import { downloadPdf } from '../services/pdfDownloadService';
+import { downloadPdf, uploadPdf, revokePdfObjectUrl } from '../services/pdfDownloadService';
 import { useResearchStore } from '../store/researchStore';
 import type { Paper, PdfAnnotation, HighlightColor } from '../types/paper';
 import { AnnotationPanel } from './AnnotationPanel';
@@ -95,9 +95,9 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { togglePaperRead } = useResearchStore();
+  const { togglePaperRead, tempPdfUrl, setTempPdfUrl } = useResearchStore();
 
-  // Load PDF
+  // Load PDF - fetches directly from source URL (view-only, not stored locally)
   useEffect(() => {
     // Early return if no paperId - check before defining async function
     if (!paperId) {
@@ -116,47 +116,41 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
       setError(null);
 
       try {
-        // First try to get from local storage
-        console.log('[PdfReader] Checking local storage for paperId:', paperId);
-        const localBlob = await pdfStorageService.getPdf(paperId);
-        console.log('[PdfReader] Local blob found:', !!localBlob, 'size:', localBlob?.size);
-        
-        if (localBlob && localBlob.size > 0 && mounted) {
-          console.log('[PdfReader] Using local PDF blob');
-          objectUrl = URL.createObjectURL(localBlob);
-          console.log('[PdfReader] Created object URL:', objectUrl);
-          setPdfUrl(objectUrl);
+        // First check if there's a temporary PDF URL from upload
+        if (tempPdfUrl) {
+          console.log('[PdfReader] Using temporary PDF URL from upload');
+          setPdfUrl(tempPdfUrl);
+          // Clear the temp URL after using it (it's now held in local state)
+          setTempPdfUrl(null);
           setIsLoading(false);
           return;
         }
-
-        // If not local, check if paper has URL and try to download
+        
+        // Directly use paper.pdfUrl for viewing (no local storage check)
         if (paper?.pdfUrl) {
-          console.log('[PdfReader] No local PDF, trying to download from:', paper.pdfUrl);
+          console.log('[PdfReader] Fetching PDF from URL:', paper.pdfUrl);
           setIsLoading(true);
-          const success = await downloadPdf(paperId, paper.pdfUrl);
-          console.log('[PdfReader] Download result:', success);
           
-          if (success && mounted) {
-            const blob = await pdfStorageService.getPdf(paperId);
-            console.log('[PdfReader] Post-download blob found:', !!blob, 'size:', blob?.size);
-            if (blob && blob.size > 0) {
-              objectUrl = URL.createObjectURL(blob);
-              setPdfUrl(objectUrl);
-              setIsLoading(false);
-              return;
-            }
+          // Fetch the PDF and get a temporary object URL for viewing
+          const fetchedUrl = await downloadPdf(paperId, paper.pdfUrl);
+          
+          if (fetchedUrl && mounted) {
+            console.log('[PdfReader] PDF fetched successfully, using object URL');
+            objectUrl = fetchedUrl;
+            setPdfUrl(objectUrl);
+            setIsLoading(false);
+            return;
           }
           
-          // If download failed, still try the direct URL as fallback
+          // If fetch failed with proxy, try direct URL as fallback
           if (mounted) {
-            console.log('[PdfReader] Download failed, trying direct URL as fallback');
+            console.log('[PdfReader] Fetch failed, trying direct URL as fallback');
             setPdfUrl(paper.pdfUrl);
             setIsLoading(false);
           }
         } else {
           // No PDF available - show upload option
-          console.log('[PdfReader] No PDF available for paperId:', paperId);
+          console.log('[PdfReader] No PDF URL available for paperId:', paperId);
           setError('No PDF available for this paper');
           setIsLoading(false);
         }
@@ -174,10 +168,10 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     return () => {
       mounted = false;
       if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
+        revokePdfObjectUrl(objectUrl);
       }
     };
-  }, [paperId, paper?.pdfUrl]);
+  }, [paperId, paper?.pdfUrl, tempPdfUrl, setTempPdfUrl]);
 
   // Load annotations
   useEffect(() => {
@@ -486,24 +480,15 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     }
   }, [paperId]);
 
-  // Download PDF
+  // Download PDF (downloads from source URL, not from local storage)
   const handleDownload = useCallback(async () => {
-    const blob = await pdfStorageService.getPdf(paperId);
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${paper?.title || paperId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } else if (paper?.pdfUrl) {
+    if (paper?.pdfUrl) {
+      // Open the PDF URL in a new tab for download
       window.open(paper.pdfUrl, '_blank');
     }
-  }, [paperId, paper]);
+  }, [paper]);
 
-  // Upload PDF handler
+  // Upload PDF handler - creates temporary object URL (not stored locally)
   const handleUploadPdf = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -518,22 +503,14 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     setError(null);
     
     try {
-      // Read file as ArrayBuffer first to ensure it's valid
-      const arrayBuffer = await file.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+      // Get object URL for viewing (not stored locally)
+      const objectUrl = await uploadPdf(paperId, file);
       
-      // Save to IndexedDB
-      await pdfStorageService.savePdf(paperId, blob, file.name, 'upload');
-      
-      // Verify save was successful
-      const savedBlob = await pdfStorageService.getPdf(paperId);
-      if (!savedBlob || savedBlob.size === 0) {
-        throw new Error('Failed to save PDF');
+      if (!objectUrl) {
+        throw new Error('Failed to process PDF');
       }
       
-      // Create object URL from the saved blob
-      const url = URL.createObjectURL(savedBlob);
-      setPdfUrl(url);
+      setPdfUrl(objectUrl);
       setError(null);
       setIsLoading(false);
     } catch (err) {
@@ -546,7 +523,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     }
   }, [paperId]);
 
-  // Handle download from remote URL
+  // Handle download from remote URL - fetches PDF for viewing (not stored locally)
   const handleDownloadFromUrl = useCallback(async () => {
     if (!paper?.pdfUrl) return;
     
@@ -554,20 +531,17 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     setError(null);
     
     try {
-      const success = await downloadPdf(paperId, paper.pdfUrl);
-      if (success) {
-        const blob = await pdfStorageService.getPdf(paperId);
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          setPdfUrl(url);
-          setError(null);
-        }
+      const objectUrl = await downloadPdf(paperId, paper.pdfUrl);
+      if (objectUrl) {
+        setPdfUrl(objectUrl);
+        setError(null);
       } else {
-        setError('Download failed. Please try uploading the PDF manually.');
+        // If fetch failed, try direct URL as fallback
+        setPdfUrl(paper.pdfUrl);
       }
     } catch (err) {
-      console.error('Download failed:', err);
-      setError('Download failed. Please try uploading the PDF manually.');
+      console.error('Fetch failed:', err);
+      setError('Failed to fetch PDF. Please try uploading the PDF manually.');
     } finally {
       setIsLoading(false);
     }

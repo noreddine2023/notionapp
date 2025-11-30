@@ -65,7 +65,10 @@ async function getDB(): Promise<IDBPDatabase<ResearchDB>> {
   return dbPromise;
 }
 
-// ============= PDF Storage Operations =============
+// ============= PDF Storage Operations (DEPRECATED) =============
+// PDF blob storage has been deprecated in favor of view-only streaming.
+// PDFs are now fetched directly from source URLs without local storage.
+// Only annotations and reading progress are persisted.
 
 /**
  * Normalize paperId to ensure consistency
@@ -76,101 +79,63 @@ function normalizePaperId(paperId: string): string {
 }
 
 /**
- * Save PDF to IndexedDB
+ * @deprecated PDF blobs are no longer stored. PDFs are fetched directly from source URLs.
+ * This function is kept for backwards compatibility but does nothing.
  */
 export async function savePdf(
-  paperId: string,
-  pdfBlob: Blob,
-  fileName: string,
-  source: 'api' | 'upload' = 'api'
+  _paperId: string,
+  _pdfBlob: Blob,
+  _fileName: string,
+  _source: 'api' | 'upload' = 'api'
 ): Promise<void> {
-  const normalizedId = normalizePaperId(paperId);
-  console.log('[pdfStorageService] Saving PDF with paperId:', normalizedId, 'size:', pdfBlob.size, 'source:', source);
-  
-  const db = await getDB();
-  const storage: PdfStorage = {
-    paperId: normalizedId,
-    pdfBlob,
-    fileName,
-    fileSize: pdfBlob.size,
-    downloadedAt: new Date(),
-    source,
-  };
-  await db.put(PDF_STORE, storage);
-  
-  // Verify the save was successful - check both record existence and blob validity
-  const verification = await db.get(PDF_STORE, normalizedId);
-  const saveSuccess = !!verification && !!verification.pdfBlob && verification.pdfBlob.size > 0;
-  console.log('[pdfStorageService] Verification - PDF saved:', saveSuccess, 'size:', verification?.fileSize);
-  
-  if (!saveSuccess) {
-    throw new Error('Failed to save PDF to storage');
-  }
+  console.log('[pdfStorageService] savePdf is deprecated - PDFs are now view-only and not stored');
+  // No-op: PDFs are no longer stored locally
 }
 
 /**
- * Get PDF from IndexedDB
+ * @deprecated PDF blobs are no longer stored. PDFs are fetched directly from source URLs.
+ * This function is kept for backwards compatibility but always returns null.
  */
-export async function getPdf(paperId: string): Promise<Blob | null> {
-  const normalizedId = normalizePaperId(paperId);
-  console.log('[pdfStorageService] Getting PDF with paperId:', normalizedId);
-  
-  const db = await getDB();
-  const storage = await db.get(PDF_STORE, normalizedId);
-  console.log('[pdfStorageService] Found PDF:', !!storage, 'size:', storage?.fileSize);
-  
-  return storage?.pdfBlob || null;
+export async function getPdf(_paperId: string): Promise<Blob | null> {
+  console.log('[pdfStorageService] getPdf is deprecated - PDFs are now view-only');
+  return null;
 }
 
 /**
- * Get PDF storage info
+ * @deprecated PDF storage info is no longer available.
  */
-export async function getPdfInfo(paperId: string): Promise<Omit<PdfStorage, 'pdfBlob'> | null> {
-  const normalizedId = normalizePaperId(paperId);
-  const db = await getDB();
-  const storage = await db.get(PDF_STORE, normalizedId);
-  if (!storage) return null;
-  
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { pdfBlob, ...info } = storage;
-  return info;
+export async function getPdfInfo(_paperId: string): Promise<Omit<PdfStorage, 'pdfBlob'> | null> {
+  console.log('[pdfStorageService] getPdfInfo is deprecated');
+  return null;
 }
 
 /**
- * Delete PDF from IndexedDB
+ * @deprecated PDF blobs are no longer stored.
  */
-export async function deletePdf(paperId: string): Promise<void> {
-  const normalizedId = normalizePaperId(paperId);
-  const db = await getDB();
-  await db.delete(PDF_STORE, normalizedId);
+export async function deletePdf(_paperId: string): Promise<void> {
+  console.log('[pdfStorageService] deletePdf is deprecated');
+  // No-op
 }
 
 /**
- * Check if PDF exists locally
+ * @deprecated PDF blobs are no longer stored locally.
+ * Use hasAnnotations() to check if a paper has annotation data.
  */
-export async function hasLocalPdf(paperId: string): Promise<boolean> {
-  const normalizedId = normalizePaperId(paperId);
-  console.log('[pdfStorageService] Checking if PDF exists for paperId:', normalizedId);
-  
-  const db = await getDB();
-  const storage = await db.get(PDF_STORE, normalizedId);
-  const exists = !!storage && !!storage.pdfBlob && storage.pdfBlob.size > 0;
-  console.log('[pdfStorageService] PDF exists:', exists, 'size:', storage?.fileSize);
-  
-  return exists;
+export async function hasLocalPdf(_paperId: string): Promise<boolean> {
+  console.log('[pdfStorageService] hasLocalPdf is deprecated - always returns false');
+  return false;
 }
 
 /**
- * Get all stored PDFs
+ * @deprecated PDF storage is no longer used.
  */
 export async function getAllPdfs(): Promise<Array<Omit<PdfStorage, 'pdfBlob'>>> {
-  const db = await getDB();
-  const all = await db.getAll(PDF_STORE);
-  return all.map(({ pdfBlob: _pdfBlob, ...info }) => info);
+  console.log('[pdfStorageService] getAllPdfs is deprecated');
+  return [];
 }
 
 /**
- * Get storage usage statistics
+ * Get storage usage statistics (annotations only, PDFs are no longer stored)
  */
 export async function getStorageUsage(): Promise<{
   used: number;
@@ -178,24 +143,30 @@ export async function getStorageUsage(): Promise<{
   annotationCount: number;
 }> {
   const db = await getDB();
-  const pdfs = await db.getAll(PDF_STORE);
   const annotations = await db.getAll(ANNOTATION_STORE);
   
-  const totalSize = pdfs.reduce((sum, pdf) => sum + pdf.fileSize, 0);
-  
   return {
-    used: totalSize,
-    pdfCount: pdfs.length,
+    used: 0, // No PDFs stored
+    pdfCount: 0,
     annotationCount: annotations.length,
   };
 }
 
 /**
- * Clear all PDFs to free space
+ * @deprecated PDF storage is no longer used.
  */
 export async function clearAllPdfs(): Promise<void> {
-  const db = await getDB();
-  await db.clear(PDF_STORE);
+  console.log('[pdfStorageService] clearAllPdfs is deprecated');
+  // No-op
+}
+
+/**
+ * Check if annotations exist for a paper
+ */
+export async function hasAnnotations(paperId: string): Promise<boolean> {
+  const normalizedId = normalizePaperId(paperId);
+  const annotations = await getAnnotationsForPaper(normalizedId);
+  return annotations.length > 0;
 }
 
 // ============= Reading Progress Operations =============
@@ -389,7 +360,7 @@ export async function exportAnnotationsAsMarkdown(paperId: string): Promise<stri
 }
 
 export const pdfStorageService = {
-  // PDF operations
+  // PDF operations (deprecated - kept for backwards compatibility)
   savePdf,
   getPdf,
   getPdfInfo,
@@ -415,4 +386,5 @@ export const pdfStorageService = {
   deleteAnnotationsForPaper,
   exportAnnotations,
   exportAnnotationsAsMarkdown,
+  hasAnnotations,
 };

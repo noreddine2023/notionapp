@@ -55,10 +55,12 @@ export const TextNode = memo(({ id, data, selected }: NodeProps<TextNodeData>) =
     <>
       <NodeResizer 
         minWidth={100} 
-        minHeight={40} 
+        minHeight={40}
+        maxWidth={500}
+        maxHeight={300}
         isVisible={selected}
         lineClassName="border-blue-400"
-        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded"
+        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded shadow-sm"
       />
       
       <Handle type="target" position={Position.Top} className="w-2 h-2 bg-blue-500 border-2 border-white" />

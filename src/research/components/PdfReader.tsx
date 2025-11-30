@@ -427,15 +427,19 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
   // Add standalone note (without text selection)
   const addNote = useCallback(async (pageNumber: number, noteContent: string, color: HighlightColor) => {
-    const annotation = await pdfStorageService.saveAnnotation({
-      paperId,
-      pageNumber,
-      type: 'note',
-      color,
-      rects: [], // No highlight rects for standalone notes
-      noteContent,
-    });
-    setAnnotations(prev => [...prev, annotation]);
+    try {
+      const annotation = await pdfStorageService.saveAnnotation({
+        paperId,
+        pageNumber,
+        type: 'note',
+        color,
+        rects: [], // No highlight rects for standalone notes
+        noteContent,
+      });
+      setAnnotations(prev => [...prev, annotation]);
+    } catch (err) {
+      console.error('Failed to add note:', err);
+    }
   }, [paperId]);
 
   // Download PDF

@@ -52,10 +52,12 @@ export const ShapeNode = memo(({ id, data, selected }: NodeProps<ShapeNodeData>)
     <>
       <NodeResizer 
         minWidth={50} 
-        minHeight={50} 
+        minHeight={50}
+        maxWidth={400}
+        maxHeight={400}
         isVisible={selected}
         lineClassName="border-blue-400"
-        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded"
+        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded shadow-sm"
       />
       
       <Handle type="target" position={Position.Top} className="w-2 h-2 bg-blue-500 border-2 border-white" />

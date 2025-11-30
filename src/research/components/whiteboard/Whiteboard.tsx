@@ -43,6 +43,17 @@ import 'reactflow/dist/style.css';
 type NodeDataChangeHandler = (nodeId: string, data: Record<string, unknown>) => void;
 const NodeDataChangeContext = createContext<NodeDataChangeHandler | null>(null);
 
+/**
+ * Hook to access the node data change handler from the whiteboard context.
+ * Returns null when used outside of the NodeDataChangeContext provider.
+ * 
+ * @returns The node data change handler function, or null if not available.
+ * @example
+ * const onDataChange = useNodeDataChange();
+ * if (onDataChange) {
+ *   onDataChange(nodeId, { content: 'new content' });
+ * }
+ */
 export const useNodeDataChange = () => {
   const context = useContext(NodeDataChangeContext);
   return context;

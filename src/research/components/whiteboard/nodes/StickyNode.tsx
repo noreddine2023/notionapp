@@ -47,10 +47,12 @@ export const StickyNode = memo(({ id, data, selected }: NodeProps<StickyNodeData
     <>
       <NodeResizer 
         minWidth={150} 
-        minHeight={100} 
+        minHeight={100}
+        maxWidth={600}
+        maxHeight={400}
         isVisible={selected}
         lineClassName="border-gray-400"
-        handleClassName="h-3 w-3 bg-white border-2 border-gray-400 rounded"
+        handleClassName="h-3 w-3 bg-white border-2 border-gray-400 rounded shadow-sm"
       />
       
       <Handle type="target" position={Position.Top} className="w-2 h-2 bg-gray-400 border-2 border-white" />

@@ -72,10 +72,12 @@ export const PaperNode = memo(({ id, data, selected, onOpenPaper }: PaperNodePro
     <>
       <NodeResizer 
         minWidth={280} 
-        minHeight={180} 
+        minHeight={180}
+        maxWidth={500}
+        maxHeight={450}
         isVisible={selected}
         lineClassName="border-blue-400"
-        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded"
+        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded shadow-sm"
       />
       
       {/* Connection handles */}

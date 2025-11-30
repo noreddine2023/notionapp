@@ -6,6 +6,7 @@ import { useState, useCallback, memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { NodeResizer } from '@reactflow/node-resizer';
 import type { StickyNodeData } from '../../../types/paper';
+import { useNodeDataChange } from '../Whiteboard';
 
 import '@reactflow/node-resizer/dist/style.css';
 
@@ -18,27 +19,27 @@ const STICKY_COLORS = [
   { name: 'Orange', bg: 'bg-orange-100', border: 'border-orange-300', text: 'text-orange-900' },
 ];
 
-interface StickyNodeProps extends NodeProps<StickyNodeData> {
-  onDataChange?: (id: string, data: Partial<StickyNodeData>) => void;
-}
-
-export const StickyNode = memo(({ id, data, selected, onDataChange }: StickyNodeProps) => {
+export const StickyNode = memo(({ id, data, selected }: NodeProps<StickyNodeData>) => {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(data.content || '');
   const [showColorPicker, setShowColorPicker] = useState(false);
+
+  const onDataChange = useNodeDataChange();
 
   const colorConfig = STICKY_COLORS.find(c => c.name.toLowerCase() === (data.color || 'yellow').toLowerCase()) 
     || STICKY_COLORS[0];
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
-    if (content !== data.content) {
-      onDataChange?.(id, { content });
+    if (content !== data.content && onDataChange) {
+      onDataChange(id, { content });
     }
   }, [id, content, data.content, onDataChange]);
 
   const handleColorChange = useCallback((colorName: string) => {
-    onDataChange?.(id, { color: colorName.toLowerCase() });
+    if (onDataChange) {
+      onDataChange(id, { color: colorName.toLowerCase() });
+    }
     setShowColorPicker(false);
   }, [id, onDataChange]);
 

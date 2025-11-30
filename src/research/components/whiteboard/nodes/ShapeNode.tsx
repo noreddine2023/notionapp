@@ -6,16 +6,14 @@ import { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { NodeResizer } from '@reactflow/node-resizer';
 import type { ShapeNodeData } from '../../../types/paper';
+import { useNodeDataChange } from '../Whiteboard';
 
 import '@reactflow/node-resizer/dist/style.css';
 
 const SHAPE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6B7280'];
 
-interface ShapeNodeProps extends NodeProps<ShapeNodeData> {
-  onDataChange?: (id: string, data: Partial<ShapeNodeData>) => void;
-}
-
-export const ShapeNode = memo(({ id, data, selected, onDataChange }: ShapeNodeProps) => {
+export const ShapeNode = memo(({ id, data, selected }: NodeProps<ShapeNodeData>) => {
+  const onDataChange = useNodeDataChange();
   const fillColor = data.fillColor || '#3B82F6';
   const borderColor = data.borderColor || '#1D4ED8';
   const shapeType = data.shapeType || 'rectangle';

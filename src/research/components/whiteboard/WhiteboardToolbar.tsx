@@ -21,6 +21,7 @@ import {
   Redo2,
   Save,
   FileText,
+  Copy,
 } from 'lucide-react';
 
 export type WhiteboardTool = 
@@ -49,6 +50,7 @@ interface WhiteboardToolbarProps {
   onRedo: () => void;
   onSave: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   hasSelection: boolean;
   onAddPaper: () => void;
   isSaving?: boolean;
@@ -96,6 +98,7 @@ export const WhiteboardToolbar = memo(({
   onRedo,
   onSave,
   onDelete,
+  onDuplicate,
   hasSelection,
   onAddPaper,
   isSaving,
@@ -168,7 +171,13 @@ export const WhiteboardToolbar = memo(({
       
       <Divider />
       
-      {/* Delete */}
+      {/* Delete and Duplicate */}
+      <ToolButton
+        icon={<Copy className="w-5 h-5" />}
+        label="Duplicate (Ctrl+D)"
+        onClick={onDuplicate}
+        disabled={!hasSelection}
+      />
       <ToolButton
         icon={<Trash2 className="w-5 h-5" />}
         label="Delete (Del)"

@@ -8,6 +8,7 @@ import {
   Hand,
   Type,
   StickyNote,
+  ImageIcon,
   Square,
   Circle,
   Triangle,
@@ -21,6 +22,7 @@ import {
   Redo2,
   Save,
   FileText,
+  Copy,
 } from 'lucide-react';
 
 export type WhiteboardTool = 
@@ -28,6 +30,7 @@ export type WhiteboardTool =
   | 'pan' 
   | 'text' 
   | 'sticky' 
+  | 'image'
   | 'rectangle' 
   | 'circle' 
   | 'triangle'
@@ -49,6 +52,7 @@ interface WhiteboardToolbarProps {
   onRedo: () => void;
   onSave: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   hasSelection: boolean;
   onAddPaper: () => void;
   isSaving?: boolean;
@@ -96,6 +100,7 @@ export const WhiteboardToolbar = memo(({
   onRedo,
   onSave,
   onDelete,
+  onDuplicate,
   hasSelection,
   onAddPaper,
   isSaving,
@@ -130,6 +135,12 @@ export const WhiteboardToolbar = memo(({
         label="Sticky Note (N)"
         isActive={activeTool === 'sticky'}
         onClick={() => onToolChange('sticky')}
+      />
+      <ToolButton
+        icon={<ImageIcon className="w-5 h-5" />}
+        label="Image (I)"
+        isActive={activeTool === 'image'}
+        onClick={() => onToolChange('image')}
       />
       <ToolButton
         icon={<FileText className="w-5 h-5" />}
@@ -168,7 +179,13 @@ export const WhiteboardToolbar = memo(({
       
       <Divider />
       
-      {/* Delete */}
+      {/* Delete and Duplicate */}
+      <ToolButton
+        icon={<Copy className="w-5 h-5" />}
+        label="Duplicate (Ctrl+D)"
+        onClick={onDuplicate}
+        disabled={!hasSelection}
+      />
       <ToolButton
         icon={<Trash2 className="w-5 h-5" />}
         label="Delete (Del)"

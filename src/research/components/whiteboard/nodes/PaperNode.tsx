@@ -5,24 +5,28 @@
 import { useState, useCallback, memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { NodeResizer } from '@reactflow/node-resizer';
-import { FileText, Calendar, Users, Hash, MessageSquare, Plus, Trash2, ExternalLink } from 'lucide-react';
+import { FileText, Calendar, Users, Hash, MessageSquare, Plus, Trash2, ExternalLink, Edit2 } from 'lucide-react';
 import type { PaperNodeData, WhiteboardComment } from '../../../types/paper';
 import { generateBlockId } from '../../../../editor/utils/idGenerator';
+import { useNodeDataChange } from '../Whiteboard';
 
 import '@reactflow/node-resizer/dist/style.css';
 
 interface PaperNodeProps extends NodeProps<PaperNodeData> {
-  onDataChange?: (id: string, data: Partial<PaperNodeData>) => void;
   onOpenPaper?: (paperId: string) => void;
 }
 
-export const PaperNode = memo(({ id, data, selected, onDataChange, onOpenPaper }: PaperNodeProps) => {
+export const PaperNode = memo(({ id, data, selected, onOpenPaper }: PaperNodeProps) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [showComments, setShowComments] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentText, setEditCommentText] = useState('');
+
+  const onDataChange = useNodeDataChange();
 
   const handleAddComment = useCallback(() => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !onDataChange) return;
     
     const comment: WhiteboardComment = {
       id: generateBlockId(),
@@ -32,15 +36,34 @@ export const PaperNode = memo(({ id, data, selected, onDataChange, onOpenPaper }
     };
     
     const updatedComments = [...(data.comments || []), comment];
-    onDataChange?.(id, { comments: updatedComments });
+    onDataChange(id, { comments: updatedComments });
     setNewComment('');
     setIsAddingComment(false);
   }, [id, data.comments, newComment, onDataChange]);
 
   const handleDeleteComment = useCallback((commentId: string) => {
+    if (!onDataChange) return;
     const updatedComments = (data.comments || []).filter(c => c.id !== commentId);
-    onDataChange?.(id, { comments: updatedComments });
+    onDataChange(id, { comments: updatedComments });
   }, [id, data.comments, onDataChange]);
+
+  const handleEditComment = useCallback((comment: WhiteboardComment) => {
+    setEditingCommentId(comment.id);
+    setEditCommentText(comment.content);
+  }, []);
+
+  const handleSaveEditComment = useCallback(() => {
+    if (!editCommentText.trim() || !editingCommentId || !onDataChange) return;
+    
+    const updatedComments = (data.comments || []).map(c => 
+      c.id === editingCommentId 
+        ? { ...c, content: editCommentText.trim(), updatedAt: new Date() }
+        : c
+    );
+    onDataChange(id, { comments: updatedComments });
+    setEditingCommentId(null);
+    setEditCommentText('');
+  }, [id, data.comments, editingCommentId, editCommentText, onDataChange]);
 
   const authorsList = data.authors?.slice(0, 3).join(', ') || 'Unknown Authors';
   const hasMoreAuthors = data.authors && data.authors.length > 3;
@@ -49,10 +72,12 @@ export const PaperNode = memo(({ id, data, selected, onDataChange, onOpenPaper }
     <>
       <NodeResizer 
         minWidth={280} 
-        minHeight={180} 
+        minHeight={180}
+        maxWidth={500}
+        maxHeight={450}
         isVisible={selected}
         lineClassName="border-blue-400"
-        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded"
+        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded shadow-sm"
       />
       
       {/* Connection handles */}
@@ -135,13 +160,54 @@ export const PaperNode = memo(({ id, data, selected, onDataChange, onOpenPaper }
               {/* Existing comments */}
               {data.comments?.map((comment) => (
                 <div key={comment.id} className="bg-yellow-50 rounded-lg p-2 relative group">
-                  <p className="text-xs text-gray-700 pr-6">{comment.content}</p>
-                  <button
-                    onClick={() => handleDeleteComment(comment.id)}
-                    className="absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 hover:bg-red-100 rounded transition-all"
-                  >
-                    <Trash2 className="w-3 h-3 text-red-500" />
-                  </button>
+                  {editingCommentId === comment.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editCommentText}
+                        onChange={(e) => setEditCommentText(e.target.value)}
+                        className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingCommentId(null);
+                            setEditCommentText('');
+                          }}
+                          className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveEditComment}
+                          className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs text-gray-700 pr-12">{comment.content}</p>
+                      <div className="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                        <button
+                          onClick={() => handleEditComment(comment)}
+                          className="p-1 hover:bg-blue-100 rounded"
+                          title="Edit comment"
+                        >
+                          <Edit2 className="w-3 h-3 text-blue-500" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="p-1 hover:bg-red-100 rounded"
+                          title="Delete comment"
+                        >
+                          <Trash2 className="w-3 h-3 text-red-500" />
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
               

@@ -15,13 +15,13 @@ interface HighlightPopoverProps {
   onClose: () => void;
 }
 
-const COLORS: { color: HighlightColor; emoji: string; bg: string }[] = [
-  { color: 'yellow', emoji: '🟡', bg: 'bg-yellow-400' },
-  { color: 'green', emoji: '🟢', bg: 'bg-green-500' },
-  { color: 'blue', emoji: '🔵', bg: 'bg-blue-500' },
-  { color: 'pink', emoji: '🩷', bg: 'bg-pink-400' },
-  { color: 'orange', emoji: '🟠', bg: 'bg-orange-400' },
-  { color: 'purple', emoji: '🟣', bg: 'bg-purple-500' },
+const COLORS: { color: HighlightColor; bg: string; ring: string }[] = [
+  { color: 'yellow', bg: 'bg-yellow-400', ring: 'ring-yellow-500' },
+  { color: 'green', bg: 'bg-green-500', ring: 'ring-green-600' },
+  { color: 'blue', bg: 'bg-blue-500', ring: 'ring-blue-600' },
+  { color: 'pink', bg: 'bg-pink-400', ring: 'ring-pink-500' },
+  { color: 'orange', bg: 'bg-orange-400', ring: 'ring-orange-500' },
+  { color: 'purple', bg: 'bg-purple-500', ring: 'ring-purple-600' },
 ];
 
 export const HighlightPopover: React.FC<HighlightPopoverProps> = ({
@@ -83,18 +83,16 @@ export const HighlightPopover: React.FC<HighlightPopoverProps> = ({
       {!showNoteInput ? (
         <div className="p-2">
           {/* Color options */}
-          <div className="flex items-center gap-1 mb-2">
-            {COLORS.map(({ color, emoji }) => (
+          <div className="flex items-center gap-1.5 mb-2">
+            {COLORS.map(({ color, bg, ring }) => (
               <button
                 key={color}
                 onClick={() => onColorChange(color)}
-                className={`w-7 h-7 flex items-center justify-center rounded-full transition-transform ${
-                  selectedColor === color ? 'ring-2 ring-white scale-110' : 'hover:scale-110'
+                className={`w-6 h-6 rounded-full ${bg} hover:scale-110 transition-all duration-150 shadow-sm ${
+                  selectedColor === color ? `ring-2 ring-offset-2 ring-offset-gray-900 ${ring}` : ''
                 }`}
-                title={color}
-              >
-                {emoji}
-              </button>
+                title={color.charAt(0).toUpperCase() + color.slice(1)}
+              />
             ))}
           </div>
 

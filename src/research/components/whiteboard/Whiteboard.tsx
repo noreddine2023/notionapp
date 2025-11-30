@@ -2,7 +2,7 @@
  * Whiteboard Component - Main whiteboard canvas using React Flow
  */
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo, createContext, useContext } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -22,6 +22,7 @@ import { PaperNode } from './nodes/PaperNode';
 import { StickyNode } from './nodes/StickyNode';
 import { TextNode } from './nodes/TextNode';
 import { ShapeNode } from './nodes/ShapeNode';
+import { ImageNode } from './nodes/ImageNode';
 import { WhiteboardToolbar, WhiteboardTool } from './WhiteboardToolbar';
 import { PaperSelector } from './PaperSelector';
 import { whiteboardStorageService } from '../../services/whiteboardStorageService';
@@ -34,16 +35,38 @@ import type {
   StickyNodeData,
   TextNodeData,
   ShapeNodeData,
+  ImageNodeData,
   Paper,
 } from '../../types/paper';
 
 import 'reactflow/dist/style.css';
+
+// Context for node data changes
+type NodeDataChangeHandler = (nodeId: string, data: Record<string, unknown>) => void;
+const NodeDataChangeContext = createContext<NodeDataChangeHandler | null>(null);
+
+/**
+ * Hook to access the node data change handler from the whiteboard context.
+ * Returns null when used outside of the NodeDataChangeContext provider.
+ * 
+ * @returns The node data change handler function, or null if not available.
+ * @example
+ * const onDataChange = useNodeDataChange();
+ * if (onDataChange) {
+ *   onDataChange(nodeId, { content: 'new content' });
+ * }
+ */
+export const useNodeDataChange = () => {
+  const context = useContext(NodeDataChangeContext);
+  return context;
+};
 
 const nodeTypes = {
   paper: PaperNode,
   sticky: StickyNode,
   text: TextNode,
   shape: ShapeNode,
+  image: ImageNode,
 };
 
 interface WhiteboardProps {
@@ -265,6 +288,15 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
           style: { width: 200, height: 150 },
         };
         break;
+      case 'image':
+        newNode = {
+          id,
+          type: 'image',
+          position,
+          data: { imageUrl: '', alt: '' } as ImageNodeData,
+          style: { width: 200, height: 200 },
+        };
+        break;
       case 'rectangle':
         newNode = {
           id,
@@ -326,11 +358,50 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
     setNodes((nds) => [...nds, paperNode]);
   }, [project, setNodes]);
 
+  // Handle node data change (for updating comments, content, etc.)
+  const handleNodeDataChange = useCallback((nodeId: string, data: Record<string, unknown>) => {
+    setNodes((nds) => nds.map((node) => {
+      if (node.id === nodeId) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            ...data,
+          },
+        };
+      }
+      return node;
+    }));
+  }, [setNodes]);
+
   // Handle delete selected nodes
   const handleDelete = useCallback(() => {
     setNodes((nds) => nds.filter((node) => !node.selected));
     setEdges((eds) => eds.filter((edge) => !edge.selected));
   }, [setNodes, setEdges]);
+
+  // Handle duplicate selected nodes
+  const handleDuplicate = useCallback(() => {
+    const selectedNodes = nodes.filter((node) => node.selected);
+    if (selectedNodes.length === 0) return;
+
+    const newNodes = selectedNodes.map((node) => ({
+      ...node,
+      id: generateBlockId(),
+      position: {
+        x: node.position.x + 20,
+        y: node.position.y + 20,
+      },
+      selected: true,
+      data: { ...node.data },
+    }));
+
+    // Deselect original nodes and add new ones
+    setNodes((nds) => [
+      ...nds.map((n) => ({ ...n, selected: false })),
+      ...newNodes,
+    ]);
+  }, [nodes, setNodes]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -343,6 +414,7 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
       if (e.key === 'h' || e.key === 'H') setActiveTool('pan');
       if (e.key === 't' || e.key === 'T') setActiveTool('text');
       if (e.key === 'n' || e.key === 'N') setActiveTool('sticky');
+      if (e.key === 'i' || e.key === 'I') setActiveTool('image');
       if (e.key === 'r' || e.key === 'R') setActiveTool('rectangle');
       if (e.key === 'c' || e.key === 'C') setActiveTool('circle');
       if (e.key === 'a' || e.key === 'A') setActiveTool('arrow');
@@ -361,6 +433,10 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
         e.preventDefault();
         saveWhiteboard();
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        handleDuplicate();
+      }
       if (e.key === 'Escape') {
         setActiveTool('select');
       }
@@ -368,7 +444,7 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleDelete, handleUndo, handleRedo, saveWhiteboard]);
+  }, [handleDelete, handleUndo, handleRedo, saveWhiteboard, handleDuplicate]);
 
   // Check if any nodes are selected
   const hasSelection = nodes.some((n) => n.selected) || edges.some((e) => e.selected);
@@ -402,61 +478,65 @@ const WhiteboardContent: React.FC<WhiteboardProps> = ({ projectId, projectName, 
       
       {/* Canvas */}
       <div ref={reactFlowWrapper} className="flex-1">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onPaneClick={onPaneClick}
-          nodeTypes={nodeTypes}
-          panOnDrag={activeTool === 'pan'}
-          selectionOnDrag={activeTool === 'select'}
-          panOnScroll
-          zoomOnScroll
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          className={activeTool === 'pan' ? 'cursor-grab' : ''}
-          defaultEdgeOptions={{
-            type: 'smoothstep',
-            markerEnd: { type: MarkerType.ArrowClosed },
-          }}
-        >
-          {showGrid && <Background color="#e5e7eb" gap={20} />}
-          <MiniMap 
-            className="!bg-white !rounded-lg !shadow-lg !border !border-gray-200"
-            nodeColor={(node) => {
-              switch (node.type) {
-                case 'paper': return '#3B82F6';
-                case 'sticky': return '#FCD34D';
-                case 'text': return '#6B7280';
-                case 'shape': return '#10B981';
-                default: return '#9CA3AF';
-              }
+        <NodeDataChangeContext.Provider value={handleNodeDataChange}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onPaneClick={onPaneClick}
+            nodeTypes={nodeTypes}
+            panOnDrag={activeTool === 'pan'}
+            selectionOnDrag={activeTool === 'select'}
+            panOnScroll
+            zoomOnScroll
+            fitView
+            fitViewOptions={{ padding: 0.2 }}
+            className={activeTool === 'pan' ? 'cursor-grab' : ''}
+            defaultEdgeOptions={{
+              type: 'smoothstep',
+              markerEnd: { type: MarkerType.ArrowClosed },
             }}
-          />
-          <Controls className="!bg-white !rounded-lg !shadow-lg !border !border-gray-200" />
-          
-          <WhiteboardToolbar
-            activeTool={activeTool}
-            onToolChange={setActiveTool}
-            zoom={getZoom()}
-            onZoomIn={zoomIn}
-            onZoomOut={zoomOut}
-            onZoomFit={() => fitView({ padding: 0.2 })}
-            showGrid={showGrid}
-            onToggleGrid={() => setShowGrid((g) => !g)}
-            canUndo={historyIndex > 0}
-            canRedo={historyIndex < history.length - 1}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            onSave={saveWhiteboard}
-            onDelete={handleDelete}
-            hasSelection={hasSelection}
+          >
+            {showGrid && <Background color="#e5e7eb" gap={20} />}
+            <MiniMap 
+              className="!bg-white !rounded-lg !shadow-lg !border !border-gray-200"
+              nodeColor={(node) => {
+                switch (node.type) {
+                  case 'paper': return '#3B82F6';
+                  case 'sticky': return '#FCD34D';
+                  case 'text': return '#6B7280';
+                  case 'shape': return '#10B981';
+                  case 'image': return '#EC4899';
+                  default: return '#9CA3AF';
+                }
+              }}
+            />
+            <Controls className="!bg-white !rounded-lg !shadow-lg !border !border-gray-200" />
+            
+            <WhiteboardToolbar
+              activeTool={activeTool}
+              onToolChange={setActiveTool}
+              zoom={getZoom()}
+              onZoomIn={zoomIn}
+              onZoomOut={zoomOut}
+              onZoomFit={() => fitView({ padding: 0.2 })}
+              showGrid={showGrid}
+              onToggleGrid={() => setShowGrid((g) => !g)}
+              canUndo={historyIndex > 0}
+              canRedo={historyIndex < history.length - 1}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              onSave={saveWhiteboard}
+              onDelete={handleDelete}
+              onDuplicate={handleDuplicate}
+              hasSelection={hasSelection}
             onAddPaper={() => setShowPaperSelector(true)}
             isSaving={isSaving}
           />
-        </ReactFlow>
+          </ReactFlow>
+        </NodeDataChangeContext.Provider>
       </div>
       
       {/* Paper Selector Modal */}

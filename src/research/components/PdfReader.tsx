@@ -48,13 +48,13 @@ type ToolMode = 'select' | 'hand' | 'highlight';
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
 const DEFAULT_ZOOM = 1;
 
-const HIGHLIGHT_COLORS: { color: HighlightColor; label: string; emoji: string }[] = [
-  { color: 'yellow', label: 'Yellow', emoji: '🟡' },
-  { color: 'green', label: 'Green', emoji: '🟢' },
-  { color: 'blue', label: 'Blue', emoji: '🔵' },
-  { color: 'pink', label: 'Pink', emoji: '🩷' },
-  { color: 'orange', label: 'Orange', emoji: '🟠' },
-  { color: 'purple', label: 'Purple', emoji: '🟣' },
+const HIGHLIGHT_COLORS: { color: HighlightColor; label: string; bg: string; ring: string }[] = [
+  { color: 'yellow', label: 'Yellow', bg: 'bg-yellow-400', ring: 'ring-yellow-500' },
+  { color: 'green', label: 'Green', bg: 'bg-green-500', ring: 'ring-green-600' },
+  { color: 'blue', label: 'Blue', bg: 'bg-blue-500', ring: 'ring-blue-600' },
+  { color: 'pink', label: 'Pink', bg: 'bg-pink-400', ring: 'ring-pink-500' },
+  { color: 'orange', label: 'Orange', bg: 'bg-orange-400', ring: 'ring-orange-500' },
+  { color: 'purple', label: 'Purple', bg: 'bg-purple-500', ring: 'ring-purple-600' },
 ];
 
 export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose }) => {
@@ -425,6 +425,23 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     }
   }, []);
 
+  // Add standalone note (without text selection)
+  const addNote = useCallback(async (pageNumber: number, noteContent: string, color: HighlightColor) => {
+    try {
+      const annotation = await pdfStorageService.saveAnnotation({
+        paperId,
+        pageNumber,
+        type: 'note',
+        color,
+        rects: [], // No highlight rects for standalone notes
+        noteContent,
+      });
+      setAnnotations(prev => [...prev, annotation]);
+    } catch (err) {
+      console.error('Failed to add note:', err);
+    }
+  }, [paperId]);
+
   // Download PDF
   const handleDownload = useCallback(async () => {
     const blob = await pdfStorageService.getPdf(paperId);
@@ -633,21 +650,19 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
             
             {showColorPicker && (
               <div className="absolute top-full right-0 mt-2 p-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                <div className="flex gap-1">
-                  {HIGHLIGHT_COLORS.map(({ color, label, emoji }) => (
+                <div className="flex gap-1.5">
+                  {HIGHLIGHT_COLORS.map(({ color, label, bg, ring }) => (
                     <button
                       key={color}
                       onClick={() => {
                         setSelectedColor(color);
                         setShowColorPicker(false);
                       }}
-                      className={`p-2 rounded hover:bg-gray-100 ${
-                        selectedColor === color ? 'ring-2 ring-blue-500' : ''
+                      className={`w-6 h-6 rounded-full ${bg} hover:scale-110 transition-all duration-150 shadow-sm ${
+                        selectedColor === color ? `ring-2 ring-offset-2 ${ring}` : ''
                       }`}
                       title={label}
-                    >
-                      {emoji}
-                    </button>
+                    />
                   ))}
                 </div>
               </div>
@@ -771,7 +786,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
                   </div>
                 }
               >
-                <div ref={pageContainerRef} className="relative shadow-xl select-none">
+                <div ref={pageContainerRef} className="relative shadow-xl select-text">
                   <Page
                     pageNumber={currentPage}
                     scale={scale}
@@ -806,6 +821,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
             }}
             onDeleteAnnotation={deleteAnnotation}
             onUpdateAnnotation={updateAnnotation}
+            onAddNote={addNote}
             isDarkMode={isDarkMode}
           />
         )}

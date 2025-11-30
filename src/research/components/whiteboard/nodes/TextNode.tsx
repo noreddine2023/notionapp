@@ -7,6 +7,7 @@ import { Handle, Position, NodeProps } from 'reactflow';
 import { NodeResizer } from '@reactflow/node-resizer';
 import { Bold, Italic, Type } from 'lucide-react';
 import type { TextNodeData } from '../../../types/paper';
+import { useNodeDataChange } from '../Whiteboard';
 
 import '@reactflow/node-resizer/dist/style.css';
 
@@ -16,44 +17,50 @@ const FONT_SIZES = {
   large: 'text-xl',
 };
 
-interface TextNodeProps extends NodeProps<TextNodeData> {
-  onDataChange?: (id: string, data: Partial<TextNodeData>) => void;
-}
-
-export const TextNode = memo(({ id, data, selected, onDataChange }: TextNodeProps) => {
+export const TextNode = memo(({ id, data, selected }: NodeProps<TextNodeData>) => {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(data.content || '');
   const [showFormatting, setShowFormatting] = useState(false);
+
+  const onDataChange = useNodeDataChange();
 
   const fontSize = FONT_SIZES[data.fontSize || 'medium'];
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
-    if (content !== data.content) {
-      onDataChange?.(id, { content });
+    if (content !== data.content && onDataChange) {
+      onDataChange(id, { content });
     }
   }, [id, content, data.content, onDataChange]);
 
   const toggleBold = useCallback(() => {
-    onDataChange?.(id, { bold: !data.bold });
+    if (onDataChange) {
+      onDataChange(id, { bold: !data.bold });
+    }
   }, [id, data.bold, onDataChange]);
 
   const toggleItalic = useCallback(() => {
-    onDataChange?.(id, { italic: !data.italic });
+    if (onDataChange) {
+      onDataChange(id, { italic: !data.italic });
+    }
   }, [id, data.italic, onDataChange]);
 
   const changeFontSize = useCallback((size: 'small' | 'medium' | 'large') => {
-    onDataChange?.(id, { fontSize: size });
+    if (onDataChange) {
+      onDataChange(id, { fontSize: size });
+    }
   }, [id, onDataChange]);
 
   return (
     <>
       <NodeResizer 
         minWidth={100} 
-        minHeight={40} 
+        minHeight={40}
+        maxWidth={500}
+        maxHeight={300}
         isVisible={selected}
         lineClassName="border-blue-400"
-        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded"
+        handleClassName="h-3 w-3 bg-white border-2 border-blue-400 rounded shadow-sm"
       />
       
       <Handle type="target" position={Position.Top} className="w-2 h-2 bg-blue-500 border-2 border-white" />

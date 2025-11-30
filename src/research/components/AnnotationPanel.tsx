@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
+  Plus,
 } from 'lucide-react';
 import type { PdfAnnotation, HighlightColor } from '../types/paper';
 
@@ -22,16 +23,17 @@ interface AnnotationPanelProps {
   onNavigateToPage: (pageNumber: number) => void;
   onDeleteAnnotation: (annotationId: string) => void;
   onUpdateAnnotation: (annotationId: string, updates: Partial<PdfAnnotation>) => void;
+  onAddNote?: (pageNumber: number, noteContent: string, color: HighlightColor) => void;
   isDarkMode: boolean;
 }
 
-const COLOR_INFO: Record<HighlightColor, { label: string; emoji: string; bgClass: string }> = {
-  yellow: { label: 'Yellow', emoji: '🟡', bgClass: 'bg-yellow-100' },
-  green: { label: 'Green', emoji: '🟢', bgClass: 'bg-green-100' },
-  blue: { label: 'Blue', emoji: '🔵', bgClass: 'bg-blue-100' },
-  pink: { label: 'Pink', emoji: '🩷', bgClass: 'bg-pink-100' },
-  orange: { label: 'Orange', emoji: '🟠', bgClass: 'bg-orange-100' },
-  purple: { label: 'Purple', emoji: '🟣', bgClass: 'bg-purple-100' },
+const COLOR_INFO: Record<HighlightColor, { label: string; bgClass: string; dotClass: string }> = {
+  yellow: { label: 'Yellow', bgClass: 'bg-yellow-100', dotClass: 'bg-yellow-400' },
+  green: { label: 'Green', bgClass: 'bg-green-100', dotClass: 'bg-green-500' },
+  blue: { label: 'Blue', bgClass: 'bg-blue-100', dotClass: 'bg-blue-500' },
+  pink: { label: 'Pink', bgClass: 'bg-pink-100', dotClass: 'bg-pink-400' },
+  orange: { label: 'Orange', bgClass: 'bg-orange-100', dotClass: 'bg-orange-400' },
+  purple: { label: 'Purple', bgClass: 'bg-purple-100', dotClass: 'bg-purple-500' },
 };
 
 export const AnnotationPanel: React.FC<AnnotationPanelProps> = ({
@@ -41,6 +43,7 @@ export const AnnotationPanel: React.FC<AnnotationPanelProps> = ({
   onNavigateToPage,
   onDeleteAnnotation,
   onUpdateAnnotation,
+  onAddNote,
   isDarkMode,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +51,9 @@ export const AnnotationPanel: React.FC<AnnotationPanelProps> = ({
   const [editNoteText, setEditNoteText] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [collapsedPages, setCollapsedPages] = useState<Set<number>>(new Set());
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [newNoteColor, setNewNoteColor] = useState<HighlightColor>('yellow');
 
   // Filter annotations by search query
   const filteredAnnotations = useMemo(() => {
@@ -120,6 +126,14 @@ export const AnnotationPanel: React.FC<AnnotationPanelProps> = ({
     setDeleteConfirmId(null);
   };
 
+  const handleAddNote = () => {
+    if (!newNoteText.trim() || !onAddNote) return;
+    onAddNote(currentPage, newNoteText.trim(), newNoteColor);
+    setNewNoteText('');
+    setNewNoteColor('yellow');
+    setIsAddingNote(false);
+  };
+
   const formatDate = (date: Date) => {
     const d = new Date(date);
     return d.toLocaleDateString(undefined, { 
@@ -161,7 +175,7 @@ export const AnnotationPanel: React.FC<AnnotationPanelProps> = ({
         </div>
 
         {/* Search */}
-        <div className="relative">
+        <div className="relative mb-3">
           <Search className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 ${mutedClass}`} />
           <input
             type="text"
@@ -171,6 +185,61 @@ export const AnnotationPanel: React.FC<AnnotationPanelProps> = ({
             className={`w-full pl-8 pr-3 py-2 text-sm rounded-lg border ${inputBgClass} ${textClass} placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           />
         </div>
+
+        {/* Add Note Button */}
+        {onAddNote && !isAddingNote && (
+          <button
+            onClick={() => setIsAddingNote(true)}
+            className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border border-dashed ${borderClass} ${hoverBgClass} ${mutedClass} transition-colors`}
+          >
+            <Plus className="w-4 h-4" />
+            Add Note to Page {currentPage}
+          </button>
+        )}
+
+        {/* Add Note Form */}
+        {isAddingNote && (
+          <div className={`p-3 rounded-lg border ${borderClass} ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div className="flex items-center gap-1.5 mb-2">
+              {Object.entries(COLOR_INFO).map(([color, info]) => (
+                <button
+                  key={color}
+                  onClick={() => setNewNoteColor(color as HighlightColor)}
+                  className={`w-5 h-5 rounded-full ${info.dotClass} hover:scale-110 transition-all duration-150 shadow-sm ${
+                    newNoteColor === color ? 'ring-2 ring-offset-1 ring-blue-500' : ''
+                  }`}
+                  title={info.label}
+                />
+              ))}
+            </div>
+            <textarea
+              value={newNoteText}
+              onChange={(e) => setNewNoteText(e.target.value)}
+              placeholder="Write your note..."
+              className={`w-full px-2 py-1.5 text-sm rounded border ${inputBgClass} ${textClass} resize-none focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              rows={3}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                onClick={() => {
+                  setIsAddingNote(false);
+                  setNewNoteText('');
+                }}
+                className={`px-3 py-1 text-xs ${mutedClass} hover:text-gray-700`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddNote}
+                disabled={!newNoteText.trim()}
+                className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add Note
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Annotations list */}
@@ -309,7 +378,7 @@ const AnnotationCard: React.FC<AnnotationCardProps> = ({
       {/* Header with color indicator and actions */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0 flex-shrink">
-          <span title={colorInfo.label} className="flex-shrink-0">{colorInfo.emoji}</span>
+          <span title={colorInfo.label} className={`w-3 h-3 rounded-full ${colorInfo.dotClass} flex-shrink-0 shadow-sm`} />
           <span className={`text-xs ${mutedClass} truncate`}>
             {annotation.type.charAt(0).toUpperCase() + annotation.type.slice(1)}
           </span>

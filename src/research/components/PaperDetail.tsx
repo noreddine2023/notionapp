@@ -25,7 +25,7 @@ import { usePaperDetails } from '../hooks/usePaperDetails';
 import { useResearchStore } from '../store/researchStore';
 import { generateCitation, copyToClipboard } from '../services/citationService';
 import { pdfStorageService } from '../services/pdfStorageService';
-import { pdfDownloadService, DownloadProgress, onDownloadProgress } from '../services/pdfDownloadService';
+import { pdfDownloadService, DownloadProgress, onDownloadProgress, getCachedPdfUrl } from '../services/pdfDownloadService';
 import type { CitationFormat, ReadingProgress } from '../types/paper';
 
 interface PaperDetailProps {
@@ -81,6 +81,23 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
       setViewedPaper(paper);
     }
   }, [paper]);
+
+  // Pre-fetch PDF in the background when viewing paper details
+  // This improves the experience when user clicks "View PDF" since it may already be cached
+  useEffect(() => {
+    if (paper?.pdfUrl && paper?.id) {
+      // Check if PDF is already cached
+      const cachedUrl = getCachedPdfUrl(paper.id);
+      if (!cachedUrl) {
+        console.log('[PaperDetail] Pre-fetching PDF in background:', paper.id);
+        // Start pre-fetching in the background (don't await)
+        pdfDownloadService.downloadPdf(paper.id, paper.pdfUrl).catch((err) => {
+          // Silently fail pre-fetching - it's optional
+          console.warn('[PaperDetail] Pre-fetch failed (will retry when opening PDF):', err);
+        });
+      }
+    }
+  }, [paper?.pdfUrl, paper?.id]);
 
   // Check for annotations and reading progress (PDFs are no longer stored locally)
   useEffect(() => {
@@ -243,9 +260,10 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
               <button
                 disabled
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 rounded-md"
+                title={downloadProgress.statusMessage || 'Loading...'}
               >
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Loading... {downloadProgress.progress}%
+                {downloadProgress.statusMessage || `Loading... ${downloadProgress.progress}%`}
               </button>
             ) : (
               <button

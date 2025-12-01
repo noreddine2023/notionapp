@@ -25,7 +25,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { pdfStorageService } from '../services/pdfStorageService';
-import { uploadPdf, revokePdfObjectUrl, downloadPdf } from '../services/pdfDownloadService';
+import { uploadPdf, revokePdfObjectUrl, downloadPdf, getCachedPdfUrl, onDownloadProgress, DownloadProgress } from '../services/pdfDownloadService';
 import { useResearchStore } from '../store/researchStore';
 import type { Paper, PdfAnnotation, HighlightColor } from '../types/paper';
 import { AnnotationPanel } from './AnnotationPanel';
@@ -85,6 +85,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isUploadedPdf, setIsUploadedPdf] = useState<boolean>(false); // Track if PDF is from upload
+  const [loadingStatus, setLoadingStatus] = useState<string>('Loading PDF...'); // Detailed loading status
 
   // For backwards compatibility
   const highlightMode = toolMode === 'highlight';
@@ -96,6 +97,16 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { togglePaperRead, tempPdfUrl, setTempPdfUrl } = useResearchStore();
+
+  // Subscribe to download progress for detailed status updates
+  useEffect(() => {
+    const unsubscribe = onDownloadProgress((progress: DownloadProgress) => {
+      if (progress.paperId === paperId && progress.statusMessage) {
+        setLoadingStatus(progress.statusMessage);
+      }
+    });
+    return unsubscribe;
+  }, [paperId]);
 
   // Load PDF - directly use source URL (view-only, not stored locally)
   useEffect(() => {
@@ -114,11 +125,13 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
       console.log('[PdfReader] Loading PDF for paperId:', paperId, 'paper:', paper?.title);
       setIsLoading(true);
       setError(null);
+      setLoadingStatus('Loading PDF...');
 
       try {
         // First check if there's a temporary PDF URL from upload
         if (tempPdfUrl) {
           console.log('[PdfReader] Using temporary PDF URL from upload');
+          setLoadingStatus('Loading uploaded PDF...');
           setPdfUrl(tempPdfUrl);
           setIsUploadedPdf(true); // Mark as uploaded PDF (use native viewer)
           // Track the object URL for cleanup
@@ -129,33 +142,57 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
           return;
         }
         
-        // For external PDFs, fetch through CORS proxies to get blob data
-        // This ensures we always render actual PDF content in the native viewer
-        if (paper?.pdfUrl) {
-          console.log('[PdfReader] Fetching external PDF through CORS proxy:', paper.pdfUrl);
-          const fetchedUrl = await downloadPdf(paperId, paper.pdfUrl);
-          
+        // Check cache first for faster loading
+        const cachedUrl = getCachedPdfUrl(paperId);
+        if (cachedUrl) {
+          console.log('[PdfReader] Using cached PDF URL');
+          setLoadingStatus('Loading from cache...');
+          setPdfUrl(cachedUrl);
+          setIsUploadedPdf(false);
+          objectUrl = cachedUrl;
+          setIsLoading(false);
+          return;
+        }
+        
+        // Wait for paper data to be available before fetching
+        // This prevents race conditions where we try to fetch before paper is ready
+        if (!paper?.pdfUrl) {
+          console.log('[PdfReader] Waiting for paper data...');
+          setLoadingStatus('Waiting for paper data...');
+          // Give a short delay to allow paper data to load
+          await new Promise(resolve => setTimeout(resolve, 100));
           if (!mounted) return;
           
-          if (fetchedUrl) {
-            console.log('[PdfReader] PDF fetched successfully, using native viewer');
-            setPdfUrl(fetchedUrl);
-            setIsUploadedPdf(false); // External PDF
-            objectUrl = fetchedUrl;
-            setIsLoading(false);
-            return;
-          } else {
-            // Fetch failed - show error
-            console.error('[PdfReader] Failed to fetch PDF through proxies');
-            setError('Failed to load PDF. The PDF may be inaccessible or the URL may be invalid.');
+          // Check again after delay - if still no pdfUrl, show appropriate message
+          if (!paper?.pdfUrl) {
+            setError('No PDF URL available for this paper');
             setIsLoading(false);
             return;
           }
         }
         
-        // No PDF URL available
-        setError('No PDF URL available for this paper');
-        setIsLoading(false);
+        // For external PDFs, fetch through CORS proxies to get blob data
+        // This ensures we always render actual PDF content in the native viewer
+        console.log('[PdfReader] Fetching external PDF through CORS proxy:', paper.pdfUrl);
+        setLoadingStatus('Connecting to server...');
+        const fetchedUrl = await downloadPdf(paperId, paper.pdfUrl);
+        
+        if (!mounted) return;
+        
+        if (fetchedUrl) {
+          console.log('[PdfReader] PDF fetched successfully, using native viewer');
+          setPdfUrl(fetchedUrl);
+          setIsUploadedPdf(false); // External PDF
+          objectUrl = fetchedUrl;
+          setIsLoading(false);
+          return;
+        } else {
+          // Fetch failed - show error
+          console.error('[PdfReader] Failed to fetch PDF through proxies');
+          setError('Failed to load PDF. The PDF may be inaccessible or the URL may be invalid.');
+          setIsLoading(false);
+          return;
+        }
       } catch (err) {
         console.error('[PdfReader] Failed to load PDF:', err);
         if (mounted) {
@@ -169,11 +206,13 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
 
     return () => {
       mounted = false;
-      if (objectUrl) {
+      // Don't revoke cached URLs on unmount - they're managed by the cache
+      // Only revoke if it's a temporary uploaded PDF
+      if (objectUrl && isUploadedPdf) {
         revokePdfObjectUrl(objectUrl);
       }
     };
-  }, [paperId, paper?.pdfUrl, tempPdfUrl, setTempPdfUrl]);
+  }, [paperId, paper?.pdfUrl, tempPdfUrl, setTempPdfUrl, isUploadedPdf]);
 
   // Load annotations
   useEffect(() => {
@@ -534,9 +573,11 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
     
     setError(null);
     setIsLoading(true);
+    setLoadingStatus('Retrying...');
     
     try {
-      const fetchedUrl = await downloadPdf(paperId, paper.pdfUrl);
+      // Force refresh to bypass cache and stale download checks
+      const fetchedUrl = await downloadPdf(paperId, paper.pdfUrl, undefined, 1, true);
       if (fetchedUrl) {
         setPdfUrl(fetchedUrl);
         setIsUploadedPdf(false);
@@ -557,7 +598,7 @@ export const PdfReader: React.FC<PdfReaderProps> = ({ paperId, paper, onClose })
       <div className="flex items-center justify-center h-full bg-gray-100">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading PDF...</p>
+          <p className="text-gray-600">{loadingStatus}</p>
         </div>
       </div>
     );

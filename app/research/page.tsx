@@ -104,7 +104,9 @@ export default function ResearchPage() {
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(paper.url, "_blank");
+                      if (paper.url) {
+                        window.open(paper.url, "_blank");
+                      }
                     }}
                   >
                     <ExternalLink className="h-4 w-4" />

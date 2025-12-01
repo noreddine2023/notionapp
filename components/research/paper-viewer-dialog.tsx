@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FileText, Download, ExternalLink, X } from "lucide-react";
+import { FileText, Download, ExternalLink } from "lucide-react";
 
 import {
   Dialog,

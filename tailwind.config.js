@@ -49,6 +49,8 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        // Custom radius values for modern glassmorphic design
+        // These complement (not replace) Tailwind's default scale
         xl: "0.75rem",
         "2xl": "1rem",
         "3xl": "1.5rem",

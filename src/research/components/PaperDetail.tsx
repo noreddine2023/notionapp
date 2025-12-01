@@ -93,7 +93,7 @@ export const PaperDetail: React.FC<PaperDetailProps> = ({ paperId }) => {
         // Start pre-fetching in the background (don't await)
         pdfDownloadService.downloadPdf(paper.id, paper.pdfUrl).catch((err) => {
           // Silently fail pre-fetching - it's optional
-          console.log('[PaperDetail] Pre-fetch failed (will retry when opening PDF):', err);
+          console.warn('[PaperDetail] Pre-fetch failed (will retry when opening PDF):', err);
         });
       }
     }

@@ -33,7 +33,27 @@ const downloadListeners = new Set<(progress: DownloadProgress) => void>();
 const STALE_DOWNLOAD_TIMEOUT_MS = 30000;
 
 // Cache for successfully downloaded PDF object URLs
+// Limited to prevent memory leaks from accumulated object URLs
 const pdfCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 5;
+
+/**
+ * Add a PDF to cache, evicting oldest entries if cache is full
+ */
+function addToCache(paperId: string, objectUrl: string): void {
+  // If cache is full, remove the oldest entry (first one in Map)
+  if (pdfCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = pdfCache.keys().next().value;
+    if (oldestKey) {
+      const oldUrl = pdfCache.get(oldestKey);
+      if (oldUrl) {
+        URL.revokeObjectURL(oldUrl);
+      }
+      pdfCache.delete(oldestKey);
+    }
+  }
+  pdfCache.set(paperId, objectUrl);
+}
 
 /**
  * Subscribe to download progress updates
@@ -124,7 +144,7 @@ export async function downloadPdf(
   paperId: string,
   pdfUrl: string,
   _fileName?: string,
-  maxRetries: number = 1,
+  maxRetries: number = 2,
   forceRefresh: boolean = false
 ): Promise<string | null> {
   console.log('[pdfDownloadService] Fetching PDF for viewing, paperId:', paperId, 'from:', pdfUrl);
@@ -157,6 +177,7 @@ export async function downloadPdf(
   }
   
   // Calculate total attempts for progress reporting
+  // This represents: (1 direct + N CORS proxies) × (maxRetries + 1 initial attempt)
   const totalAttempts = (1 + CORS_PROXIES.length) * (maxRetries + 1);
   
   notifyProgress({
@@ -265,8 +286,8 @@ export async function downloadPdf(
         // Create object URL for viewing (not stored locally)
         const objectUrl = URL.createObjectURL(blob);
         
-        // Cache the PDF URL
-        pdfCache.set(paperId, objectUrl);
+        // Cache the PDF URL (with automatic eviction if cache is full)
+        addToCache(paperId, objectUrl);
         
         console.log('[pdfDownloadService] PDF fetched successfully for viewing, paperId:', paperId);
         notifyProgress({

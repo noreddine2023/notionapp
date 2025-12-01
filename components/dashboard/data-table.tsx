@@ -55,7 +55,6 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string;
   searchPlaceholder?: string;
   isLoading?: boolean;
-  onAddNew?: () => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -64,7 +63,6 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder = "Search...",
   isLoading = false,
-  onAddNew,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -149,7 +147,7 @@ export function DataTable<TData, TValue>({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" onClick={onAddNew}>
+          <Button size="sm">
             <Plus className="mr-2 h-4 w-4" />
             Add New
           </Button>

@@ -45,16 +45,3 @@ export {
   TooltipContent,
   TooltipProvider,
 } from "./tooltip";
-export {
-  Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogClose,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from "./dialog";
-export { Textarea } from "./textarea";

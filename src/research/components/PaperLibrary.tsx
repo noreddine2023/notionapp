@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 import { PaperCard } from './PaperCard';
 import { useResearchStore } from '../store/researchStore';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type ViewMode = 'grid' | 'list';
 
@@ -67,130 +71,129 @@ export const PaperLibrary: React.FC = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Library className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-800">My Library</h2>
+            <Library className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold">My Library</h2>
           </div>
           
           <div className="flex items-center gap-1">
-            <button
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="icon"
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-md transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-              title="List view"
             >
               <List className="w-4 h-4" />
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="icon"
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-md transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-              title="Grid view"
             >
               <Grid className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Search */}
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
             type="text"
             placeholder="Search your library..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full pl-9 pr-9 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="pl-9 pr-9"
           />
           {searchQuery && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 setSearchQuery('');
                 setStoreSearchQuery('');
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-200 text-gray-400"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
             >
               <X className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Filter tabs */}
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant={libraryFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setLibraryFilter('all')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-              libraryFilter === 'all'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className="gap-1.5"
           >
             <Filter className="w-3.5 h-3.5" />
-            All ({stats.total})
-          </button>
-          <button
+            All
+            <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+              {stats.total}
+            </Badge>
+          </Button>
+          <Button
+            variant={libraryFilter === 'favorites' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setLibraryFilter('favorites')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-              libraryFilter === 'favorites'
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className="gap-1.5"
           >
             <Star className="w-3.5 h-3.5" />
-            Favorites ({stats.favorites})
-          </button>
-          <button
+            Favorites
+            <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+              {stats.favorites}
+            </Badge>
+          </Button>
+          <Button
+            variant={libraryFilter === 'unread' ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setLibraryFilter('unread')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-              libraryFilter === 'unread'
-                ? 'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className="gap-1.5"
           >
             <BookOpen className="w-3.5 h-3.5" />
-            Unread ({stats.unread})
-          </button>
+            Unread
+            <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+              {stats.unread}
+            </Badge>
+          </Button>
         </div>
       </div>
 
       {/* Papers list */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {papers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Library className="w-12 h-12 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-500 mb-1">Your library is empty</p>
-            <p className="text-xs text-gray-400">
-              Search for papers and add them to your library
-            </p>
-          </div>
-        ) : filteredPapers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Search className="w-12 h-12 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-500 mb-1">No papers match your filters</p>
-            <p className="text-xs text-gray-400">
-              Try different search terms or filters
-            </p>
-          </div>
-        ) : (
-          <div className={viewMode === 'grid' ? 'grid grid-cols-1 gap-3' : 'space-y-3'}>
-            {filteredPapers.map((paper) => (
-              <PaperCard
-                key={paper.id}
-                paper={paper}
-                onClick={() => handlePaperClick(paper.id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <ScrollArea className="flex-1">
+        <div className="p-4">
+          {papers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Library className="w-12 h-12 text-muted-foreground/50 mb-3" />
+              <p className="text-sm font-medium mb-1">Your library is empty</p>
+              <p className="text-xs text-muted-foreground">
+                Search for papers and add them to your library
+              </p>
+            </div>
+          ) : filteredPapers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="w-12 h-12 text-muted-foreground/50 mb-3" />
+              <p className="text-sm font-medium mb-1">No papers match your filters</p>
+              <p className="text-xs text-muted-foreground">
+                Try different search terms or filters
+              </p>
+            </div>
+          ) : (
+            <div className={viewMode === 'grid' ? 'grid grid-cols-1 gap-3' : 'space-y-3'}>
+              {filteredPapers.map((paper) => (
+                <PaperCard
+                  key={paper.id}
+                  paper={paper}
+                  onClick={() => handlePaperClick(paper.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 };

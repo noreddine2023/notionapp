@@ -7,7 +7,6 @@ import {
   Search,
   Filter,
   X,
-  ChevronDown,
   Loader2,
   AlertCircle,
   FileText,
@@ -17,6 +16,13 @@ import { PaperCard } from './PaperCard';
 import { useResearchStore } from '../store/researchStore';
 import type { SearchFilters } from '../types/paper';
 import type { ApiSource } from '../services/paperSearchService';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const SearchPapers: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
@@ -80,34 +86,34 @@ export const SearchPapers: React.FC = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Search Header */}
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <form onSubmit={handleSearch} className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
               type="text"
               placeholder="Search papers by title, author, keywords..."
               value={query}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="pl-9 pr-9"
             />
             {query && (
-              <button
+              <Button
                 type="button"
-                onClick={() => {
-                  updateQuery('');
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-gray-200 text-gray-400"
+                variant="ghost"
+                size="icon"
+                onClick={() => updateQuery('')}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             )}
           </div>
-          <button
+          <Button
             type="submit"
             disabled={isLoading || !query.trim()}
-            className="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="gap-2"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -115,188 +121,202 @@ export const SearchPapers: React.FC = () => {
               <Search className="w-4 h-4" />
             )}
             Search
-          </button>
+          </Button>
         </form>
 
         {/* Filter toggle and source selector */}
         <div className="flex items-center justify-between mt-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-              showFilters || Object.keys(filters).length > 0
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            Filters
-            {Object.keys(filters).length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-600 text-white rounded-full">
-                {Object.keys(filters).length}
-              </span>
-            )}
-            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-          </button>
+          <Sheet open={showFilters} onOpenChange={setShowFilters}>
+            <SheetTrigger asChild>
+              <Button
+                variant={Object.keys(filters).length > 0 ? "default" : "outline"}
+                size="sm"
+                className="gap-1.5"
+              >
+                <Filter className="w-4 h-4" />
+                Filters
+                {Object.keys(filters).length > 0 && (
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                    {Object.keys(filters).length}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Search Filters</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Year From
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 2020"
+                      value={filters.yearFrom || ''}
+                      onChange={(e) => handleFilterChange('yearFrom', e.target.value ? parseInt(e.target.value) : undefined)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Year To
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 2024"
+                      value={filters.yearTo || ''}
+                      onChange={(e) => handleFilterChange('yearTo', e.target.value ? parseInt(e.target.value) : undefined)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Sort By
+                  </label>
+                  <Select
+                    value={filters.sortBy || 'relevance'}
+                    onValueChange={(value) => handleFilterChange('sortBy', value as SearchFilters['sortBy'])}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select sort order" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="relevance">Relevance</SelectItem>
+                      <SelectItem value="date">Date (newest first)</SelectItem>
+                      <SelectItem value="citations">Citations (most cited)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.openAccessOnly || false}
+                    onChange={(e) => handleFilterChange('openAccessOnly', e.target.checked || undefined)}
+                    className="w-4 h-4 text-primary rounded border-input focus:ring-ring"
+                  />
+                  <span className="text-sm">Open Access only</span>
+                </label>
+
+                {Object.keys(filters).length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="w-full"
+                  >
+                    Clear all filters
+                  </Button>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Source:</span>
-            <select
-              value={source}
-              onChange={(e) => handleSourceChange(e.target.value as ApiSource)}
-              className="text-sm bg-white border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="semanticscholar">Semantic Scholar</option>
-              <option value="openalex">OpenAlex</option>
-              <option value="core">CORE</option>
-              <option value="all">All Sources</option>
-            </select>
+            <span className="text-xs text-muted-foreground">Source:</span>
+            <Select value={source} onValueChange={(value) => handleSourceChange(value as ApiSource)}>
+              <SelectTrigger className="w-[180px] h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semanticscholar">Semantic Scholar</SelectItem>
+                <SelectItem value="openalex">OpenAlex</SelectItem>
+                <SelectItem value="core">CORE</SelectItem>
+                <SelectItem value="all">All Sources</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-
-        {/* Expanded Filters */}
-        {showFilters && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Year From
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 2020"
-                  value={filters.yearFrom || ''}
-                  onChange={(e) => handleFilterChange('yearFrom', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Year To
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 2024"
-                  value={filters.yearTo || ''}
-                  onChange={(e) => handleFilterChange('yearTo', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Sort By
-              </label>
-              <select
-                value={filters.sortBy || 'relevance'}
-                onChange={(e) => handleFilterChange('sortBy', e.target.value as SearchFilters['sortBy'])}
-                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="relevance">Relevance</option>
-                <option value="date">Date (newest first)</option>
-                <option value="citations">Citations (most cited)</option>
-              </select>
-            </div>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.openAccessOnly || false}
-                onChange={(e) => handleFilterChange('openAccessOnly', e.target.checked || undefined)}
-                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Open Access only</span>
-            </label>
-
-            {Object.keys(filters).length > 0 && (
-              <button
-                onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                Clear all filters
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Results count */}
-        {totalResults > 0 && (
-          <p className="text-sm text-gray-500 mb-4">
-            Found {totalResults.toLocaleString()} papers
-          </p>
-        )}
+      <ScrollArea className="flex-1">
+        <div className="p-4">
+          {/* Results count */}
+          {totalResults > 0 && (
+            <div className="mb-4">
+              <Badge variant="secondary" className="text-sm">
+                {totalResults.toLocaleString()} papers found
+              </Badge>
+            </div>
+          )}
 
-        {/* Loading state */}
-        {isLoading && results.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
-            <p className="text-sm text-gray-500">Searching papers...</p>
+          {/* Loading state */}
+          {isLoading && results.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <p className="text-sm text-muted-foreground">Searching papers...</p>
+              <div className="w-full space-y-3">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && (
+            <div className="flex items-center gap-2 p-4 bg-destructive/10 text-destructive rounded-lg mb-4 border border-destructive/20">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!isLoading && !error && results.length === 0 && query && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <FileText className="w-12 h-12 text-muted-foreground/50 mb-3" />
+              <p className="text-sm font-medium text-foreground mb-1">No papers found</p>
+              <p className="text-xs text-muted-foreground">
+                Try different keywords or adjust your filters
+              </p>
+            </div>
+          )}
+
+          {/* Initial state */}
+          {!isLoading && !error && results.length === 0 && !query && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="w-12 h-12 text-muted-foreground/50 mb-3" />
+              <p className="text-sm font-medium text-foreground mb-1">Search for scientific papers</p>
+              <p className="text-xs text-muted-foreground">
+                Enter keywords, author names, or DOIs and press Search or Enter
+              </p>
+            </div>
+          )}
+
+          {/* Results list */}
+          <div className="space-y-3">
+            {results.map((paper) => (
+              <PaperCard
+                key={paper.id}
+                paper={paper}
+                onClick={() => handlePaperClick(paper.id)}
+              />
+            ))}
           </div>
-        )}
 
-        {/* Error state */}
-        {error && (
-          <div className="flex items-center gap-2 p-4 bg-red-50 text-red-700 rounded-lg mb-4">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
-          </div>
-        )}
+          {/* Load more */}
+          {hasMore && !isLoading && (
+            <div className="mt-4 text-center">
+              <Button
+                onClick={loadMore}
+                variant="outline"
+              >
+                Load more papers
+              </Button>
+            </div>
+          )}
 
-        {/* Empty state */}
-        {!isLoading && !error && results.length === 0 && query && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileText className="w-12 h-12 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-500 mb-1">No papers found</p>
-            <p className="text-xs text-gray-400">
-              Try different keywords or adjust your filters
-            </p>
-          </div>
-        )}
-
-        {/* Initial state */}
-        {!isLoading && !error && results.length === 0 && !query && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Search className="w-12 h-12 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-500 mb-1">Search for scientific papers</p>
-            <p className="text-xs text-gray-400">
-              Enter keywords, author names, or DOIs and press Search or Enter
-            </p>
-          </div>
-        )}
-
-        {/* Results list */}
-        <div className="space-y-3">
-          {results.map((paper) => (
-            <PaperCard
-              key={paper.id}
-              paper={paper}
-              onClick={() => handlePaperClick(paper.id)}
-            />
-          ))}
+          {/* Loading more indicator */}
+          {isLoading && results.length > 0 && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            </div>
+          )}
         </div>
-
-        {/* Load more */}
-        {hasMore && !isLoading && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={loadMore}
-              className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-            >
-              Load more papers
-            </button>
-          </div>
-        )}
-
-        {/* Loading more indicator */}
-        {isLoading && results.length > 0 && (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-          </div>
-        )}
-      </div>
+      </ScrollArea>
     </div>
   );
 };

@@ -88,19 +88,19 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
       <div key={project.id} className="transition-all duration-200">
         <div
           onClick={() => onProjectSelect(project.id)}
-          className={`group flex items-center gap-2 mx-1 px-2 py-2 rounded-lg cursor-pointer transition-all duration-150 text-sm ${
+          className={`group flex items-center gap-2 mx-1 px-2 py-2 rounded-xl cursor-pointer transition-all duration-200 text-sm ${
             isSelected
-              ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-100'
-              : 'text-gray-600 hover:bg-gray-50 hover:shadow-sm border border-transparent'
-          }`}
+              ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-500/20 dark:to-blue-600/10 text-blue-700 dark:text-blue-300 shadow-md border-l-2 border-blue-500 dark:border-blue-400 hover:scale-[1.02]'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-white/10 hover:shadow-sm border border-transparent hover:translate-x-1'
+          } active:scale-[0.98]`}
           style={{ marginLeft: `${4 + level * 12}px` }}
         >
           {/* Expand/Collapse button */}
           {subProjects.length > 0 ? (
             <button
               onClick={(e) => toggleProjectExpansion(project.id, e)}
-              className={`p-0.5 rounded transition-colors ${
-                isSelected ? 'hover:bg-blue-100' : 'hover:bg-gray-200'
+              className={`p-0.5 rounded-lg transition-all duration-200 hover:scale-110 ${
+                isSelected ? 'hover:bg-blue-200 dark:hover:bg-blue-700/30' : 'hover:bg-gray-200 dark:hover:bg-white/20'
               }`}
             >
               <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 ${
@@ -112,11 +112,11 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
           )}
           
           {/* Color indicator */}
-          <div className={`w-2 h-2 rounded-full ${projectColor} flex-shrink-0`} />
+          <div className={`w-2 h-2 rounded-full ${projectColor} flex-shrink-0 shadow-sm`} />
           
           {/* Folder icon */}
-          <Folder className={`w-4 h-4 flex-shrink-0 ${
-            isSelected ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+          <Folder className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+            isSelected ? 'text-blue-500 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'
           }`} />
           
           {/* Project name */}
@@ -126,8 +126,8 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
           {paperCount > 0 && (
             <span className={`px-1.5 py-0.5 text-xs rounded-full flex-shrink-0 ${
               isSelected 
-                ? 'bg-blue-100 text-blue-600' 
-                : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
+                ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300' 
+                : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400 group-hover:bg-gray-200 dark:group-hover:bg-white/20'
             }`}>
               {paperCount}
             </span>
@@ -148,8 +148,8 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
     <div className="flex flex-col">
       {/* Section header */}
       <div className="flex items-center gap-2 px-4 py-2">
-        <Beaker className="w-4 h-4 text-purple-600" />
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <Beaker className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           Research Papers
         </span>
       </div>
@@ -157,11 +157,11 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
       {/* Search papers */}
       <button
         onClick={onSearchClick}
-        className={`flex items-center gap-2 mx-2 px-3 py-2 rounded-lg transition-colors ${
+        className={`flex items-center gap-2 mx-2 px-3 py-2 rounded-xl transition-all duration-200 ${
           currentView === 'search'
-            ? 'bg-purple-100 text-purple-700'
-            : 'text-gray-600 hover:bg-gray-100'
-        }`}
+            ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md hover:shadow-lg hover:scale-[1.02]'
+            : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-white/10 hover:scale-[1.02]'
+        } active:scale-[0.98]`}
       >
         <Search className="w-4 h-4" />
         <span className="text-sm font-medium">Search Papers</span>
@@ -170,16 +170,16 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
       {/* My Library */}
       <button
         onClick={onLibraryClick}
-        className={`flex items-center gap-2 mx-2 px-3 py-2 rounded-lg transition-colors ${
+        className={`flex items-center gap-2 mx-2 px-3 py-2 rounded-xl transition-all duration-200 ${
           currentView === 'library'
-            ? 'bg-purple-100 text-purple-700'
-            : 'text-gray-600 hover:bg-gray-100'
-        }`}
+            ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md hover:shadow-lg hover:scale-[1.02]'
+            : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-white/10 hover:scale-[1.02]'
+        } active:scale-[0.98]`}
       >
         <Library className="w-4 h-4" />
         <span className="text-sm font-medium flex-1 text-left">My Library</span>
         {papers.length > 0 && (
-          <span className="text-xs text-gray-400">({papers.length})</span>
+          <span className={`text-xs ${currentView === 'library' ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'}`}>({papers.length})</span>
         )}
       </button>
 
@@ -187,7 +187,7 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
       <div className="mt-2">
         <button
           onClick={toggleProjectsExpansion}
-          className="flex items-center gap-2 w-full px-4 py-1.5 text-gray-600 hover:bg-gray-50 transition-colors rounded-lg mx-1"
+          className="flex items-center gap-2 w-full px-4 py-1.5 text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-white/10 transition-all duration-200 rounded-xl mx-1 hover:scale-[1.02] active:scale-[0.98]"
         >
           <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${
             expandedProjects ? 'rotate-90' : ''
@@ -195,7 +195,7 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
           <Folder className="w-4 h-4" />
           <span className="text-sm font-medium flex-1 text-left">Projects</span>
           {projects.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-500 rounded-full">
+            <span className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400 rounded-full">
               {projects.length}
             </span>
           )}
@@ -207,7 +207,7 @@ export const ResearchSidebar: React.FC<ResearchSidebarProps> = ({
             
             <button
               onClick={onProjectsClick}
-              className="flex items-center gap-2 mx-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border border-dashed border-gray-200 hover:border-gray-300"
+              className="flex items-center gap-2 mx-2 px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-white/10 rounded-xl transition-all duration-200 border border-dashed border-gray-200 dark:border-white/20 hover:border-gray-300 dark:hover:border-white/30 hover:scale-[1.02] active:scale-[0.98]"
             >
               <FolderPlus className="w-4 h-4" />
               <span>Manage Projects</span>

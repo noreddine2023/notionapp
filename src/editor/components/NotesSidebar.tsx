@@ -153,22 +153,22 @@ export const NotesSidebar: React.FC = () => {
   });
 
   return (
-    <div className="notes-sidebar flex flex-col h-full bg-white border-r border-gray-200">
+    <div className="notes-sidebar flex flex-col h-full bg-transparent">
       {/* Header */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4 border-b border-gray-200/50 dark:border-white/10">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-800">Notes</h2>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Notes</h2>
           <div className="flex items-center gap-1">
             <button
               onClick={() => createNote(activeGroupId)}
-              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors"
+              className="p-1.5 rounded-xl hover:bg-white/50 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-all duration-200 hover:scale-110 active:scale-95"
               title="New Note"
             >
               <Plus className="w-5 h-5" />
             </button>
             <button
               onClick={() => setIsCreatingGroup(true)}
-              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-colors"
+              className="p-1.5 rounded-xl hover:bg-white/50 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-all duration-200 hover:scale-110 active:scale-95"
               title="New Group"
             >
               <FolderPlus className="w-5 h-5" />
@@ -178,18 +178,18 @@ export const NotesSidebar: React.FC = () => {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Search notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full pl-9 pr-3 py-2 text-sm bg-white/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all backdrop-blur-sm"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 text-gray-400"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-gray-200 dark:hover:bg-white/20 text-gray-400 dark:text-gray-500 transition-all duration-200"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -198,14 +198,14 @@ export const NotesSidebar: React.FC = () => {
       </div>
 
       {/* Filter tabs */}
-      <div className="px-3 py-2 border-b border-gray-100">
+      <div className="px-3 py-2 border-b border-gray-200/50 dark:border-white/10">
         <button
           onClick={() => setActiveGroup(null)}
-          className={`w-full text-left px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          className={`w-full text-left px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ${
             activeGroupId === null
-              ? 'bg-blue-50 text-blue-700'
-              : 'text-gray-600 hover:bg-gray-50'
-          }`}
+              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg hover:scale-[1.02]'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-white/10 hover:scale-[1.02]'
+          } active:scale-[0.98]`}
         >
           All Notes ({notes.length})
         </button>
@@ -219,7 +219,7 @@ export const NotesSidebar: React.FC = () => {
           const groupNotes = groupedNotesMap.get(group.id) || [];
 
           return (
-            <div key={group.id} className="border-b border-gray-50">
+            <div key={group.id} className="border-b border-gray-200/30 dark:border-white/5">
               {/* Group header */}
               <div
                 onClick={() => {
@@ -227,10 +227,10 @@ export const NotesSidebar: React.FC = () => {
                   toggleGroupExpansion(group.id);
                 }}
                 onContextMenu={(e) => handleContextMenu(e, 'group', group.id)}
-                className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-all duration-200 ${
                   activeGroupId === group.id
-                    ? 'bg-blue-50'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-blue-50/50 dark:bg-blue-500/10'
+                    : 'hover:bg-white/50 dark:hover:bg-white/5 hover:translate-x-0.5'
                 }`}
               >
                 <button
@@ -238,16 +238,16 @@ export const NotesSidebar: React.FC = () => {
                     e.stopPropagation();
                     toggleGroupExpansion(group.id);
                   }}
-                  className="p-0.5 rounded hover:bg-gray-200"
+                  className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-white/20 transition-all duration-200"
                 >
                   {isExpanded ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                    <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   )}
                 </button>
                 <div
-                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm"
                   style={{ backgroundColor: group.color }}
                 />
                 {editingGroupId === group.id ? (
@@ -265,14 +265,14 @@ export const NotesSidebar: React.FC = () => {
                       }
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex-1 px-1 py-0.5 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 px-1 py-0.5 text-sm border border-blue-300 dark:border-blue-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100"
                   />
                 ) : (
-                  <span className="flex-1 text-sm font-medium text-gray-700 truncate">
+                  <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
                     {group.name}
                   </span>
                 )}
-                <span className="text-xs text-gray-400">{groupNotes.length}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{groupNotes.length}</span>
               </div>
 
               {/* Group notes */}
@@ -514,16 +514,16 @@ const NoteCard: React.FC<NoteCardProps> = ({
     <div
       onClick={onClick}
       onContextMenu={onContextMenu}
-      className={`group relative mx-2 my-0.5 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 ${
+      className={`group relative mx-2 my-0.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
         isActive
-          ? 'bg-blue-100 shadow-sm'
-          : 'hover:bg-gray-50'
-      }`}
+          ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-500/20 dark:to-blue-600/10 shadow-md border-l-2 border-blue-500 dark:border-blue-400 hover:scale-[1.02]'
+          : 'hover:bg-white/50 dark:hover:bg-white/5 hover:translate-x-1 hover:shadow-sm'
+      } active:scale-[0.98]`}
     >
       {/* Group indicator */}
       {groupColor && (
         <div
-          className="absolute left-0 top-2 bottom-2 w-1 rounded-full"
+          className="absolute left-0 top-2 bottom-2 w-1 rounded-full shadow-sm"
           style={{ backgroundColor: groupColor }}
         />
       )}
@@ -532,7 +532,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
         {/* Title */}
         <h3
           className={`text-sm font-medium truncate ${
-            isActive ? 'text-blue-900' : 'text-gray-800'
+            isActive ? 'text-blue-900 dark:text-blue-100' : 'text-gray-800 dark:text-gray-200'
           }`}
         >
           {note.title || 'Untitled'}
@@ -541,7 +541,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
         {/* Preview */}
         <p
           className={`text-xs mt-0.5 line-clamp-2 ${
-            isActive ? 'text-blue-700/70' : 'text-gray-500'
+            isActive ? 'text-blue-700/70 dark:text-blue-300/70' : 'text-gray-500 dark:text-gray-400'
           }`}
         >
           {preview || 'No content'}
@@ -550,7 +550,7 @@ const NoteCard: React.FC<NoteCardProps> = ({
         {/* Date */}
         <p
           className={`text-[10px] mt-1 ${
-            isActive ? 'text-blue-600/60' : 'text-gray-400'
+            isActive ? 'text-blue-600/60 dark:text-blue-400/60' : 'text-gray-400 dark:text-gray-500'
           }`}
         >
           {formatRelativeTime(note.updatedAt)}
@@ -563,11 +563,11 @@ const NoteCard: React.FC<NoteCardProps> = ({
           e.stopPropagation();
           onContextMenu(e);
         }}
-        className={`absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
-          isActive ? 'hover:bg-blue-200' : 'hover:bg-gray-200'
+        className={`absolute top-2 right-2 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 ${
+          isActive ? 'hover:bg-blue-200 dark:hover:bg-blue-700/30' : 'hover:bg-gray-200 dark:hover:bg-white/20'
         }`}
       >
-        <MoreHorizontal className="w-4 h-4 text-gray-500" />
+        <MoreHorizontal className="w-4 h-4 text-gray-500 dark:text-gray-400" />
       </button>
     </div>
   );

@@ -16,6 +16,10 @@ import {
 } from 'lucide-react';
 import type { Paper } from '../types/paper';
 import { useResearchStore } from '../store/researchStore';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface PaperCardProps {
   paper: Paper;
@@ -70,160 +74,216 @@ export const PaperCard: React.FC<PaperCardProps> = ({
   };
 
   return (
-    <div
-      onClick={onClick}
-      className={`bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer ${
-        paper.isRead ? 'opacity-75' : ''
-      }`}
-    >
-      {/* Header with badges */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          {paper.openAccess && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-              <Unlock className="w-3 h-3" />
-              Open Access
-            </span>
-          )}
-          {paper.year > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-              <Calendar className="w-3 h-3" />
-              {paper.year}
-            </span>
-          )}
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-            <Quote className="w-3 h-3" />
-            {paper.citationCount} citations
-          </span>
-        </div>
-        
-        {showLibraryActions && (
-          <div className="flex items-center gap-1">
-            {isInLibrary && (
-              <button
-                onClick={handleToggleFavorite}
-                className={`p-1.5 rounded-md transition-colors ${
-                  paper.isFavorite
-                    ? 'text-yellow-500 hover:bg-yellow-50'
-                    : 'text-gray-400 hover:bg-gray-100'
-                }`}
-                title={paper.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              >
-                {paper.isFavorite ? (
-                  <Star className="w-4 h-4 fill-current" />
-                ) : (
-                  <StarOff className="w-4 h-4" />
-                )}
-              </button>
-            )}
-            <button
-              onClick={handleAddToLibrary}
-              className={`p-1.5 rounded-md transition-colors ${
-                isInLibrary
-                  ? 'text-green-600 bg-green-50 hover:bg-green-100'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-              title={isInLibrary ? 'Remove from library' : 'Add to library'}
-            >
-              {isInLibrary ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                <Plus className="w-4 h-4" />
+    <TooltipProvider>
+      <Card
+        onClick={onClick}
+        className={`group cursor-pointer transition-all hover:shadow-lg hover:scale-[1.01] ${
+          paper.isRead ? 'opacity-75' : ''
+        }`}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {paper.openAccess && (
+                <Badge variant="success" className="gap-1">
+                  <Unlock className="w-3 h-3" />
+                  Open Access
+                </Badge>
               )}
-            </button>
+              {paper.year > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="secondary" className="gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {paper.year}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Published in {paper.year}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="gap-1">
+                    <Quote className="w-3 h-3" />
+                    {paper.citationCount}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{paper.citationCount} citations</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            
+            {showLibraryActions && (
+              <div className="flex items-center gap-1">
+                {isInLibrary && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleToggleFavorite}
+                        className={`h-8 w-8 ${
+                          paper.isFavorite
+                            ? 'text-yellow-500 hover:text-yellow-600'
+                            : 'text-muted-foreground'
+                        }`}
+                      >
+                        {paper.isFavorite ? (
+                          <Star className="w-4 h-4 fill-current" />
+                        ) : (
+                          <StarOff className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{paper.isFavorite ? 'Remove from favorites' : 'Add to favorites'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={isInLibrary ? "default" : "outline"}
+                      size="icon"
+                      onClick={handleAddToLibrary}
+                      className="h-8 w-8"
+                    >
+                      {isInLibrary ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{isInLibrary ? 'Remove from library' : 'Add to library'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </CardHeader>
 
-      {/* Title */}
-      <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
-        {paper.title}
-      </h3>
+        <CardContent className="pb-3">
+          {/* Title */}
+          <h3 className="text-base font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+            {paper.title}
+          </h3>
 
-      {/* Authors */}
-      <p className="text-sm text-gray-600 mb-2">
-        {truncateAuthors(paper.authors)}
-      </p>
+          {/* Authors */}
+          <p className="text-sm text-muted-foreground mb-2">
+            {truncateAuthors(paper.authors)}
+          </p>
 
-      {/* Venue */}
-      {paper.venue && (
-        <p className="text-sm text-gray-500 italic mb-2 line-clamp-1">
-          {paper.venue}
-        </p>
-      )}
-
-      {/* Abstract */}
-      {paper.abstract && (
-        <p className="text-sm text-gray-600 line-clamp-3 mb-3">
-          {truncateAbstract(paper.abstract)}
-        </p>
-      )}
-
-      {/* Keywords */}
-      {paper.keywords.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
-          {paper.keywords.slice(0, 4).map((keyword, index) => (
-            <span
-              key={index}
-              className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"
-            >
-              {keyword}
-            </span>
-          ))}
-          {paper.keywords.length > 4 && (
-            <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-500">
-              +{paper.keywords.length - 4}
-            </span>
+          {/* Venue */}
+          {paper.venue && (
+            <p className="text-sm text-muted-foreground italic mb-2 line-clamp-1">
+              {paper.venue}
+            </p>
           )}
-        </div>
-      )}
 
-      {/* Actions */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-        <div className="flex items-center gap-2">
-          {paper.pdfUrl && (
-            <a
-              href={paper.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              PDF
-            </a>
+          {/* Abstract */}
+          {paper.abstract && (
+            <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+              {truncateAbstract(paper.abstract)}
+            </p>
           )}
-          {paper.doi && (
-            <a
-              href={`https://doi.org/${paper.doi}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              DOI
-            </a>
+
+          {/* Keywords */}
+          {paper.keywords.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {paper.keywords.slice(0, 4).map((keyword, index) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="text-xs"
+                >
+                  {keyword}
+                </Badge>
+              ))}
+              {paper.keywords.length > 4 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{paper.keywords.length - 4}
+                </Badge>
+              )}
+            </div>
           )}
-        </div>
-        
-        {isInLibrary && (
-          <button
-            onClick={handleToggleRead}
-            className={`text-xs px-2 py-1 rounded ${
-              paper.isRead
-                ? 'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {paper.isRead ? 'Read' : 'Mark as read'}
-          </button>
-        )}
-        
-        <span className="text-xs text-gray-400 capitalize">
-          via {paper.source}
-        </span>
-      </div>
-    </div>
+        </CardContent>
+
+        <CardFooter className="flex items-center justify-between pt-0">
+          <div className="flex items-center gap-2">
+            {paper.pdfUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <a
+                      href={paper.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="gap-1"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      PDF
+                    </a>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View PDF</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {paper.doi && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <a
+                      href={`https://doi.org/${paper.doi}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="gap-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      DOI
+                    </a>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View on publisher site</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {isInLibrary && (
+              <Button
+                variant={paper.isRead ? "default" : "outline"}
+                size="sm"
+                onClick={handleToggleRead}
+              >
+                {paper.isRead ? 'Read' : 'Mark as read'}
+              </Button>
+            )}
+            
+            <Badge variant="outline" className="text-xs capitalize">
+              {paper.source}
+            </Badge>
+          </div>
+        </CardFooter>
+      </Card>
+    </TooltipProvider>
   );
 };
